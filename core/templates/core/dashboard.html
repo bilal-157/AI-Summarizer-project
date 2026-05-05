@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Summarizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center">
+
+<div class="w-full max-w-3xl p-6">
+
+    <!-- Header -->
+    <h1 class="text-3xl font-bold text-center mb-6">
+        AI Research Paper Summarizer 🚀
+    </h1>
+
+    <!-- Backend Error -->
+    {% if error %}
+    <p class="text-red-400 text-center mb-4">
+        {{ error }}
+    </p>
+    {% endif %}
+
+    <!-- Upload Box -->
+    <div class="bg-gray-800 p-6 rounded-2xl shadow-lg">
+
+        <form method="POST" enctype="multipart/form-data" onsubmit="return validateForm()" class="space-y-4">
+            {% csrf_token %}
+
+            <input 
+                type="file" 
+                name="file"
+                id="fileInput"
+                class="w-full p-2 bg-gray-700 rounded-lg cursor-pointer"
+            >
+
+            <!-- Frontend Error -->
+            <p id="errorMsg" class="text-red-400 hidden text-sm">
+                Please select a file first!
+            </p>
+
+            <button 
+                type="submit"
+                class="w-full bg-blue-500 hover:bg-blue-600 transition p-2 rounded-lg font-semibold"
+            >
+                Summarize
+            </button>
+
+            <!-- Loading -->
+            <p id="loading" class="hidden text-center mt-2 text-gray-400">
+                ⏳ Processing your file...
+            </p>
+        </form>
+
+    </div>
+
+    <!-- Result Section -->
+    {% if text %}
+    <div class="mt-6 bg-gray-800 p-6 rounded-2xl shadow-lg">
+        <h2 class="text-xl font-semibold mb-2">Extracted Text</h2>
+        <p class="text-gray-300 max-h-64 overflow-y-auto">
+            {{ text }}
+        </p>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- Script -->
+<script>
+function validateForm() {
+    const fileInput = document.getElementById("fileInput");
+    const errorMsg = document.getElementById("errorMsg");
+    const loading = document.getElementById("loading");
+
+    if (!fileInput.value) {
+        errorMsg.classList.remove("hidden");
+        return false;
+    }
+
+    errorMsg.classList.add("hidden");
+    loading.classList.remove("hidden");
+
+    return true;
+}
+</script>
+
+</body>
+</html>

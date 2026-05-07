@@ -1,6 +1,9 @@
+# core/urls.py
 from django.urls import path
-from .views import dashboard
+from . import views
 
 urlpatterns = [
-    path('', dashboard, name='dashboard'),
+    path('', views.landing_page, name='landing'),  # Landing page with login/signup
+    path('dashboard/', views.dashboard, name='dashboard'),  # Dashboard after login
+    path('signup/', views.signup, name='signup'),  # Sign up page
 ]

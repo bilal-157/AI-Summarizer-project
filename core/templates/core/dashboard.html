@@ -1,38 +1,69 @@
+<!-- core/templates/core/dashboard.html -->
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AI Summarizer</title>
+    <title>AI Summarizer - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center">
+<body class="bg-gray-900 text-white min-h-screen">
 
-<div class="w-full max-w-3xl p-6">
+<!-- Navigation Bar - FIXED LOGOUT -->
+<nav class="bg-gray-800 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <div class="flex items-center">
+                <h1 class="text-xl font-bold">AI Research Paper Summarizer 🚀</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="text-gray-300">Welcome, {{ user.username }}!</span>
+                <!-- FIXED: Changed from <a> to form for POST request -->
+                <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg transition">
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</nav>
 
-    <!-- Header -->
-    <h1 class="text-3xl font-bold text-center mb-6">
-        AI Research Paper Summarizer 🚀
-    </h1>
+<div class="w-full max-w-3xl mx-auto p-6 mt-8">
+
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="mb-4 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-500{% else %}bg-red-500{% endif %}">
+                                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
 
     <!-- Backend Error -->
     {% if error %}
-    <p class="text-red-400 text-center mb-4">
+    <div class="bg-red-500 text-white p-4 rounded-lg mb-4">
         {{ error }}
-    </p>
+    </div>
     {% endif %}
 
     <!-- Upload Box -->
     <div class="bg-gray-800 p-6 rounded-2xl shadow-lg">
 
-        <form method="POST" enctype="multipart/form-data" onsubmit="return validateForm()" class="space-y-4">
+        <form method="POST" action="{% url 'dashboard' %}" enctype="multipart/form-data" onsubmit="return validateForm()" class="space-y-4">
             {% csrf_token %}
 
-            <input 
-                type="file" 
-                name="file"
-                id="fileInput"
-                class="w-full p-2 bg-gray-700 rounded-lg cursor-pointer"
-            >
+            <div>
+                <label class="block text-gray-300 mb-2">Upload PDF File</label>
+                <input 
+                    type="file" 
+                    name="file"
+                    id="fileInput"
+                    accept=".pdf"
+                    class="w-full p-2 bg-gray-700 rounded-lg cursor-pointer border border-gray-600"
+                >
+                <p class="text-gray-500 text-sm mt-1">Only PDF files are accepted</p>
+            </div>
 
             <!-- Frontend Error -->
             <p id="errorMsg" class="text-red-400 hidden text-sm">
@@ -58,9 +89,9 @@
     {% if text %}
     <div class="mt-6 bg-gray-800 p-6 rounded-2xl shadow-lg">
         <h2 class="text-xl font-semibold mb-2">Extracted Text</h2>
-        <p class="text-gray-300 max-h-64 overflow-y-auto">
+        <div class="text-gray-300 max-h-96 overflow-y-auto whitespace-pre-wrap">
             {{ text }}
-        </p>
+        </div>
     </div>
     {% endif %}
 
@@ -74,6 +105,16 @@ function validateForm() {
     const loading = document.getElementById("loading");
 
     if (!fileInput.value) {
+        errorMsg.classList.remove("hidden");
+        return false;
+    }
+
+    // Check file extension
+    const fileName = fileInput.value;
+    const fileExtension = fileName.split('.').pop().toLowerCase();
+    
+    if (fileExtension !== 'pdf') {
+        errorMsg.textContent = 'Please select a PDF file only!';
         errorMsg.classList.remove("hidden");
         return false;
     }

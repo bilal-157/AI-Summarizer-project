@@ -121,3 +121,9 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# ========== ADD THESE AUTHENTICATION SETTINGS ==========
+LOGIN_URL = '/accounts/login/'  # Where to redirect if not logged in
+LOGIN_REDIRECT_URL = '/dashboard/'  # Where to go after login
+LOGOUT_REDIRECT_URL = '/accounts/login/'  # Where to go after logout

@@ -8,7 +8,7 @@
 
 <body class="bg-gray-900 text-white min-h-screen">
 
-<!-- Navigation Bar - FIXED LOGOUT -->
+<!-- Navigation Bar — unchanged -->
 <nav class="bg-gray-800 shadow-lg">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
@@ -17,7 +17,18 @@
             </div>
             <div class="flex items-center space-x-4">
                 <span class="text-gray-300">Welcome, {{ user.username }}!</span>
-                <!-- FIXED: Changed from <a> to form for POST request -->
+
+                {% if user.is_staff or user.is_superuser %}
+                <a href="/admin/" target="_blank"
+                   class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Admin Panel
+                </a>
+                {% endif %}
+
                 <form method="post" action="{% url 'logout' %}" style="display: inline;">
                     {% csrf_token %}
                     <button type="submit" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg transition">
@@ -31,88 +42,150 @@
 
 <div class="w-full max-w-3xl mx-auto p-6 mt-8">
 
-    <!-- Messages -->
+    <!-- Messages — unchanged -->
     {% if messages %}
         {% for message in messages %}
             <div class="mb-4 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-500{% else %}bg-red-500{% endif %}">
-                                {{ message }}
+                {{ message }}
             </div>
         {% endfor %}
     {% endif %}
 
-    <!-- Backend Error -->
+    <!-- Backend Error — unchanged -->
     {% if error %}
     <div class="bg-red-500 text-white p-4 rounded-lg mb-4">
         {{ error }}
     </div>
     {% endif %}
 
-    <!-- Upload Box -->
+    <!-- Upload Box — unchanged -->
     <div class="bg-gray-800 p-6 rounded-2xl shadow-lg">
-
         <form method="POST" action="{% url 'dashboard' %}" enctype="multipart/form-data" onsubmit="return validateForm()" class="space-y-4">
             {% csrf_token %}
-
             <div>
                 <label class="block text-gray-300 mb-2">Upload PDF File</label>
-                <input 
-                    type="file" 
-                    name="file"
-                    id="fileInput"
-                    accept=".pdf"
-                    class="w-full p-2 bg-gray-700 rounded-lg cursor-pointer border border-gray-600"
-                >
+                <input type="file" name="file" id="fileInput" accept=".pdf"
+                       class="w-full p-2 bg-gray-700 rounded-lg cursor-pointer border border-gray-600">
                 <p class="text-gray-500 text-sm mt-1">Only PDF files are accepted</p>
             </div>
-
-            <!-- Frontend Error -->
-            <p id="errorMsg" class="text-red-400 hidden text-sm">
-                Please select a file first!
-            </p>
-
-            <button 
-                type="submit"
-                class="w-full bg-blue-500 hover:bg-blue-600 transition p-2 rounded-lg font-semibold"
-            >
+            <p id="errorMsg" class="text-red-400 hidden text-sm">Please select a file first!</p>
+            <button type="submit"
+                    class="w-full bg-blue-500 hover:bg-blue-600 transition p-2 rounded-lg font-semibold">
                 Summarize
             </button>
-
-            <!-- Loading -->
             <p id="loading" class="hidden text-center mt-2 text-gray-400">
                 ⏳ Processing your file...
             </p>
         </form>
-
     </div>
 
-    <!-- Result Section -->
-    {% if text %}
-    <div class="mt-6 bg-gray-800 p-6 rounded-2xl shadow-lg">
-        <h2 class="text-xl font-semibold mb-2">Extracted Text</h2>
-        <div class="text-gray-300 max-h-96 overflow-y-auto whitespace-pre-wrap">
-            {{ text }}
+    <!-- ── ARTICLE SEARCH BOX (NEW) ── -->
+    <div class="bg-gray-800 p-6 rounded-2xl shadow-lg mt-6">
+        <h2 class="text-lg font-bold mb-3 flex items-center gap-2">
+            🔍 Find Articles on a Topic
+        </h2>
+        <form method="POST" action="{% url 'dashboard' %}" class="flex gap-3">
+            {% csrf_token %}
+            <input type="text"
+                   name="search_query"
+                   value="{{ search_query }}"
+                   placeholder="e.g. machine learning, climate change, neural networks..."
+                   class="flex-1 p-2 bg-gray-700 rounded-lg border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500">
+            <button type="submit"
+                    class="bg-green-600 hover:bg-green-700 transition px-5 py-2 rounded-lg font-semibold whitespace-nowrap">
+                Search
+            </button>
+        </form>
+    </div>
+
+    <!-- ── SEARCH ERROR ── -->
+    {% if search_error %}
+    <div class="bg-red-500 text-white p-4 rounded-lg mt-4">
+        {{ search_error }}
+    </div>
+    {% endif %}
+
+    <!-- ── ARTICLE RESULTS (NEW) ── -->
+    {% if articles %}
+    <div class="mt-6">
+        <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+            📰 Articles for &ldquo;{{ search_query }}&rdquo;
+        </h2>
+        <div class="space-y-4">
+            {% for article in articles %}
+            <div class="bg-gray-800 border border-gray-700 rounded-2xl p-5 hover:border-blue-500 transition">
+                <div class="flex justify-between items-start gap-4">
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-white text-base mb-1">
+                            {{ article.title }}
+                        </h3>
+                        <p class="text-gray-400 text-sm leading-relaxed mb-3">
+                            {{ article.description }}...
+                        </p>
+                        <span class="text-xs text-gray-500 truncate block">
+                            🔗 {{ article.url|truncatechars:60 }}
+                        </span>
+                    </div>
+                    <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer"
+                       class="flex-shrink-0 bg-blue-600 hover:bg-blue-700 transition px-4 py-2 rounded-lg text-sm font-semibold">
+                        Open ↗
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ── NO RESULTS MESSAGE ── -->
+    {% if articles is not None and not articles and not search_error %}
+    <div class="mt-4 bg-yellow-800 text-yellow-200 p-4 rounded-lg">
+        No articles found for &ldquo;{{ search_query }}&rdquo;. Try a different topic.
+    </div>
+    {% endif %}
+
+    <!-- AI Summary Section — unchanged except download button -->
+    {% if summary %}
+    <div class="mt-6 bg-gradient-to-r from-purple-900 to-blue-900 p-6 rounded-2xl shadow-lg border border-purple-500">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold flex items-center">
+                <span class="mr-2">🤖</span>
+                AI Summary
+                <span class="ml-2 text-sm bg-purple-700 px-2 py-1 rounded">Generated by AI</span>
+            </h2>
+            <span class="text-sm text-gray-400">{{ summary|wordcount }} words</span>
+        </div>
+        <div class="text-gray-200 leading-relaxed whitespace-pre-wrap">
+            {{ summary|linebreaks }}
+        </div>
+        <div class="mt-6 pt-4 border-t border-purple-700 flex justify-end">
+            <a href="{% url 'download_summary' %}"
+               class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 transition px-5 py-2 rounded-lg font-semibold text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Download Summary as PDF
+            </a>
         </div>
     </div>
     {% endif %}
 
 </div>
 
-<!-- Script -->
+<!-- Script — unchanged -->
 <script>
 function validateForm() {
     const fileInput = document.getElementById("fileInput");
-    const errorMsg = document.getElementById("errorMsg");
-    const loading = document.getElementById("loading");
+    const errorMsg  = document.getElementById("errorMsg");
+    const loading   = document.getElementById("loading");
 
     if (!fileInput.value) {
         errorMsg.classList.remove("hidden");
         return false;
     }
 
-    // Check file extension
-    const fileName = fileInput.value;
-    const fileExtension = fileName.split('.').pop().toLowerCase();
-    
+    const fileExtension = fileInput.value.split('.').pop().toLowerCase();
     if (fileExtension !== 'pdf') {
         errorMsg.textContent = 'Please select a PDF file only!';
         errorMsg.classList.remove("hidden");
@@ -121,9 +194,14 @@ function validateForm() {
 
     errorMsg.classList.add("hidden");
     loading.classList.remove("hidden");
-
     return true;
 }
+
+setTimeout(function() {
+    document.querySelectorAll('.mb-4.p-4.rounded-lg').forEach(function(el) {
+        el.style.display = 'none';
+    });
+}, 5000);
 </script>
 
 </body>

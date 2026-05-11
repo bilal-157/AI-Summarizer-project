@@ -6,4 +6,5 @@ urlpatterns = [
     path('', views.landing_page, name='landing'),  # Landing page with login/signup
     path('dashboard/', views.dashboard, name='dashboard'),  # Dashboard after login
     path('signup/', views.signup, name='signup'),  # Sign up page
+    path('download/', views.download_summary_pdf, name='download_summary'),
 ]

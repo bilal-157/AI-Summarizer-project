@@ -4,15 +4,20 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse
 from .forms import CustomUserCreationForm
+# ------------------------------------------------------------------ For Data Extraction From The Urls
+import urllib.parse
+import urllib.request
+import re
+from duckduckgo_search import DDGS
 
+import html 
 import fitz
 import re
 import traceback
 import numpy as np
 import torch
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-from transformers import pipeline
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -23,63 +28,94 @@ from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 from io import BytesIO
 from datetime import datetime
 
-from duckduckgo_search import DDGS
 
-# ---------------- CONSTANTS ----------------
 
-MAX_PDF_WORDS    = 25_000
-NUM_BEAMS        = 1
-MAX_MODEL_TOKENS = 512
+# ------------------------------------------------------------------ CONSTANTS
+MAX_PDF_WORDS            = 25_000
+TARGET_SUMMARY_WORDS_MIN = 2_000
+CHUNK_SIZE               = 400   # slightly bigger = fewer chunks total
+MAX_CHUNKS               = 20    # cap total chunks
+MINI_BATCH_SIZE          = 3     # process 3 chunks at a time to avoid RAM freeze
 
-# ---------------- MODEL (loaded once at startup) ----------------
-
-print("⏳ Loading summarization model at startup...")
+# ------------------------------------------------------------------ MODEL LOAD
+print("sshleifer/distilbart-cnn-6-6 ...")
 try:
-    summarizer = pipeline(
-        "summarization",
-        model="sshleifer/distilbart-cnn-6-6",
-        device=0 if torch.cuda.is_available() else -1,
-        batch_size=8,
-    )
-    print("✅ Model loaded and cached.")
+    _MODEL_NAME = "sshleifer/distilbart-cnn-6-6"
+    _tokenizer  = AutoTokenizer.from_pretrained(_MODEL_NAME)
+    _model      = AutoModelForSeq2SeqLM.from_pretrained(_MODEL_NAME)
+    _device     = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    _model      = _model.to(_device)
+    _model.eval()
+    print(f"Model ready on {_device}.")
 except Exception as _e:
-    summarizer = None
-    print(f"❌ Model failed to load: {_e}")
+    _tokenizer = _model = _device = None
+    print(f"Model load failed: {_e}")
 
+# ------------------------------------------------------------------ CHUNKING
 
-# ---------------- PRE/POST PROCESSING ----------------
+def chunk_text(text, chunk_size=CHUNK_SIZE):
+    """Split into fixed word chunks, then merge down to MAX_CHUNKS if needed."""
+    words  = text.split()
+    chunks = [' '.join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
+    while len(chunks) > MAX_CHUNKS:
+        merged = []
+        for i in range(0, len(chunks) - 1, 2):
+            merged.append(chunks[i] + ' ' + chunks[i + 1])
+        if len(chunks) % 2:
+            merged.append(chunks[-1])
+        chunks = merged
+    return chunks
 
-def extract_important_sentences(text, keep_ratio=0.3):
-    sentences = [s.strip() for s in text.replace('\n', ' ').split('.') if len(s.split()) > 5]
-    if len(sentences) < 3:
-        return text
-    try:
-        vectorizer   = TfidfVectorizer(stop_words='english')
-        tfidf_matrix = vectorizer.fit_transform(sentences)
-        scores       = np.array(tfidf_matrix.sum(axis=1)).flatten()
-        threshold    = np.percentile(scores, (1 - keep_ratio) * 100)
-        important    = [sentences[i] for i, s in enumerate(scores) if s >= threshold]
-        return '. '.join(important)
-    except Exception:
-        return text
+# ------------------------------------------------------------------ MINI-BATCH SUMMARIZE
 
+def summarize_chunks_batched(chunks, mini_batch_size=MINI_BATCH_SIZE):
+    """
+    Process chunks in small mini-batches (default 3 at a time).
+    Prevents RAM overload that causes the system to freeze on large inputs.
+    Greedy decode (num_beams=1, early_stopping=False) for maximum speed.
+    """
+    all_summaries = []
 
-def remove_redundancy(text, threshold=0.95):
-    sentences = [s.strip() for s in text.split('.') if len(s.split()) > 4]
-    if len(sentences) < 2:
-        return text
-    try:
-        vectorizer = TfidfVectorizer(stop_words='english')
-        tfidf      = vectorizer.fit_transform(sentences)
-        kept       = [0]
-        for i in range(1, len(sentences)):
-            sims = cosine_similarity(tfidf[i], tfidf[kept]).flatten()
-            if max(sims) < threshold:
-                kept.append(i)
-        return '. '.join([sentences[i] for i in kept]) + '.'
-    except Exception:
-        return text
+    for batch_start in range(0, len(chunks), mini_batch_size):
+        batch = chunks[batch_start: batch_start + mini_batch_size]
+        print(f"  Mini-batch {batch_start // mini_batch_size + 1} "
+              f"({len(batch)} chunks) ...")
 
+        enc = _tokenizer(
+            batch,
+            return_tensors="pt",
+            padding=True,
+            truncation=True,
+            max_length=1024,
+        ).to(_device)
+
+        with torch.no_grad():
+            out_ids = _model.generate(
+                input_ids            = enc["input_ids"],
+                attention_mask       = enc["attention_mask"],
+                max_new_tokens       = 180,
+                min_new_tokens       = 80,
+                num_beams            = 1,      # greedy — fastest
+                early_stopping       = False,  # must be False when num_beams=1
+                no_repeat_ngram_size = 0,
+                length_penalty       = 1.0,
+                repetition_penalty   = 1.0,
+            )
+
+        decoded = [
+            _tokenizer.decode(ids, skip_special_tokens=True).strip()
+            for ids in out_ids
+        ]
+        all_summaries.extend(decoded)
+
+        # Free GPU/CPU memory after each mini-batch
+        del enc, out_ids
+        if _device.type == "cuda":
+            torch.cuda.empty_cache()
+
+    return all_summaries
+
+# ------------------------------------------------------------------ POST PROCESSING
 
 def clean_summary(text):
     text = re.sub(r'\b([a-z])\s([A-Z])', r'\1. \2', text)
@@ -89,219 +125,256 @@ def clean_summary(text):
     return text.strip()
 
 
-# ---------------- TEXT PROCESSING ----------------
+def pad_to_min_words(summary, source, min_words=TARGET_SUMMARY_WORDS_MIN):
+    """
+    Safety net: if still under min_words, append highest-scoring TF-IDF
+    sentences from the original source that aren't already in the summary.
+    Zero hallucination — only real source sentences are added.
+    """
+    if len(summary.split()) >= min_words:
+        return summary
+    needed = min_words - len(summary.split())
+    print(f"Padding: need {needed} more words from source.")
+    sents = [s.strip() for s in source.replace('\n', ' ').split('.') if len(s.split()) > 8]
+    if not sents:
+        return summary
+    try:
+        vec    = TfidfVectorizer(stop_words='english')
+        mat    = vec.fit_transform(sents)
+        scores = np.array(mat.sum(axis=1)).flatten()
+        ranked = [sents[i] for i in np.argsort(scores)[::-1]]
+        low    = summary.lower()
+        extras, added = [], 0
+        for s in ranked:
+            if ' '.join(s.lower().split()[:6]) in low:
+                continue
+            extras.append(s)
+            added += len(s.split())
+            if added >= needed:
+                break
+        if extras:
+            summary = summary.rstrip('.') + '. ' + '. '.join(extras) + '.'
+    except Exception:
+        pass
+    return summary
 
-def chunk_text(text):
-    total_words = len(text.split())
-    if total_words < 2_000:
-        size = 700
-    elif total_words < 5_000:
-        size = 680
-    else:
-        size = 650
-    words = text.split()
-    for i in range(0, len(words), size):
-        yield ' '.join(words[i:i + size])
-
-
-def summarize_chunks_batched(chunks, total_words):
-    if not chunks:
-        return []
-    num_chunks = len(chunks)
-    target_total_words      = max(1_000, int(total_words * 0.10))
-    target_per_chunk_words  = target_total_words // num_chunks
-    target_per_chunk_tokens = int(target_per_chunk_words * 1.3)
-    max_tok = min(200, max(80, target_per_chunk_tokens))
-    min_tok = max(40, int(max_tok * 0.5))
-    print(f"🎯 Per-chunk: max={max_tok} tokens, min={min_tok} tokens "
-          f"(target {target_total_words} words total from {num_chunks} chunks)")
-    results = summarizer(
-        chunks,
-        max_length=max_tok,
-        min_length=min_tok,
-        do_sample=False,
-        num_beams=NUM_BEAMS,
-        early_stopping=False,
-        truncation=True,
-    )
-    return [r['summary_text'] for r in results]
-
-
-# ---------------- MAIN PIPELINE ----------------
+# ------------------------------------------------------------------ MAIN PIPELINE
 
 def summarize_text_locally(text):
-    if summarizer is None:
+    if _model is None:
         return None, "Summarization model is not available."
     try:
-        total_words = len(text.split())
-        print(f"📊 Original word count: {total_words}")
+        total = len(text.split())
+        print(f"Input words: {total}")
 
-        if total_words > MAX_PDF_WORDS:
-            approx_pages = total_words // 250
-            limit_pages  = MAX_PDF_WORDS // 250
+        if total > MAX_PDF_WORDS:
             return None, (
-                f"This PDF is too large ({total_words:,} words, ~{approx_pages} pages). "
-                f"Please upload a PDF under {MAX_PDF_WORDS:,} words (~{limit_pages} pages)."
+                f"PDF too large ({total:,} words). "
+                f"Please upload one under {MAX_PDF_WORDS:,} words."
             )
 
-        text = extract_important_sentences(text, keep_ratio=0.3)
-        print(f"🔍 After extractive filter: {len(text.split())} words (from {total_words})")
+        source = text  # keep original for padding safety-net
 
-        chunks = list(chunk_text(text))
-        print(f"📦 Chunks: {len(chunks)}")
+        # 1 — Chunk
+        chunks = chunk_text(text)
+        print(f"Chunks: {len(chunks)}")
 
-        chunk_summaries = summarize_chunks_batched(chunks, total_words)
-        final = ' '.join(chunk_summaries)
-        print(f"📝 After batched summarization: {len(final.split())} words")
+        # 2 — Mini-batched greedy generation (no RAM freeze)
+        print(f"Batch generating for {len(chunks)} chunks "
+              f"in mini-batches of {MINI_BATCH_SIZE} ...")
+        summaries = summarize_chunks_batched(chunks)
 
-        final = remove_redundancy(final, threshold=0.95)
+        # 3 — Join
+        final = ' '.join(summaries)
+        print(f"After generation: {len(final.split())} words")
+
+        # 4 — Clean
         final = clean_summary(final)
+        print(f"After cleanup: {len(final.split())} words")
 
-        print(f"✅ Final: {len(final.split())} words")
+        # 5 — Guarantee >= 2000 words
+        final = pad_to_min_words(final, source)
+        print(f"Final: {len(final.split())} words")
         return final, None
 
     except Exception as e:
-        print(f"Summarization Error: {e}")
-        print(traceback.format_exc())
+        print(f"Error: {e}\n{traceback.format_exc()}")
         return None, "An error occurred during summarization."
 
-
-# ---------------- PDF GENERATION ----------------
+# ------------------------------------------------------------------ PDF GENERATION
 
 def generate_summary_pdf(summary_text):
-    """Build a formatted PDF from summary text, return as BytesIO buffer."""
     buffer = BytesIO()
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=letter,
-        rightMargin=inch,
-        leftMargin=inch,
-        topMargin=inch,
-        bottomMargin=inch,
-    )
+    doc = SimpleDocTemplate(buffer, pagesize=letter,
+                            rightMargin=inch, leftMargin=inch,
+                            topMargin=inch, bottomMargin=inch)
     styles = getSampleStyleSheet()
 
-    title_style = ParagraphStyle(
-        'CustomTitle', parent=styles['Title'],
-        fontSize=22, textColor=colors.HexColor('#1a1a2e'),
-        spaceAfter=6, alignment=TA_CENTER,
-    )
-    subtitle_style = ParagraphStyle(
-        'Subtitle', parent=styles['Normal'],
-        fontSize=10, textColor=colors.HexColor('#888888'),
-        spaceAfter=4, alignment=TA_CENTER,
-    )
-    stats_style = ParagraphStyle(
-        'Stats', parent=styles['Normal'],
-        fontSize=9, textColor=colors.HexColor('#aaaaaa'),
-        spaceAfter=2, alignment=TA_CENTER,
-    )
-    body_style = ParagraphStyle(
-        'CustomBody', parent=styles['Normal'],
-        fontSize=11, leading=20,
-        textColor=colors.HexColor('#222222'),
-        spaceAfter=10, alignment=TA_JUSTIFY,
-    )
+    title_style    = ParagraphStyle('CT', parent=styles['Title'],
+                                    fontSize=22, textColor=colors.HexColor('#1a1a2e'),
+                                    spaceAfter=6, alignment=TA_CENTER)
+    subtitle_style = ParagraphStyle('CS', parent=styles['Normal'],
+                                    fontSize=10, textColor=colors.HexColor('#888888'),
+                                    spaceAfter=4, alignment=TA_CENTER)
+    stats_style    = ParagraphStyle('CStats', parent=styles['Normal'],
+                                    fontSize=9, textColor=colors.HexColor('#aaaaaa'),
+                                    spaceAfter=2, alignment=TA_CENTER)
+    body_style     = ParagraphStyle('CB', parent=styles['Normal'],
+                                    fontSize=11, leading=20,
+                                    textColor=colors.HexColor('#222222'),
+                                    spaceAfter=10, alignment=TA_JUSTIFY)
 
-    story = []
-    story.append(Paragraph("Document Summary", title_style))
-    story.append(Paragraph(
-        f"Generated on {datetime.now().strftime('%B %d, %Y at %I:%M %p')}",
-        subtitle_style,
-    ))
-    story.append(Spacer(1, 8))
-    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#dddddd')))
-    story.append(Spacer(1, 10))
+    story = [
+        Paragraph("Document Summary", title_style),
+        Paragraph(f"Generated on {datetime.now().strftime('%B %d, %Y at %I:%M %p')}", subtitle_style),
+        Spacer(1, 8),
+        HRFlowable(width="100%", thickness=1, color=colors.HexColor('#dddddd')),
+        Spacer(1, 10),
+        Paragraph(f"Summary: {len(summary_text.split()):,} words", stats_style),
+        Spacer(1, 14),
+    ]
 
-    word_count = len(summary_text.split())
-    story.append(Paragraph(f"Summary: {word_count} words", stats_style))
-    story.append(Spacer(1, 14))
+    sents  = [s.strip() for s in summary_text.split('.') if s.strip()]
+    groups = [sents[i:i + 5] for i in range(0, len(sents), 5)]
+    for g in groups:
+        story += [Paragraph('. '.join(g) + '.', body_style), Spacer(1, 6)]
 
-    sentences   = [s.strip() for s in summary_text.split('.') if s.strip()]
-    para_groups = [sentences[i:i + 5] for i in range(0, len(sentences), 5)]
-    for group in para_groups:
-        story.append(Paragraph('. '.join(group) + '.', body_style))
-        story.append(Spacer(1, 6))
-
-    story.append(Spacer(1, 24))
-    story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#dddddd')))
-    story.append(Spacer(1, 6))
-    story.append(Paragraph("Generated by PDF Summarizer", stats_style))
-
+    story += [
+        Spacer(1, 24),
+        HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#dddddd')),
+        Spacer(1, 6),
+        Paragraph("Generated by PDF Summarizer", stats_style),
+    ]
     doc.build(story)
     buffer.seek(0)
     return buffer
 
+# ------------------------------------------------------------------ ARTICLE SEARCH
 
-# ---------------- ARTICLE SEARCH ----------------
+def fetch_page_text(url, max_words=300, timeout=6):
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={
+                'User-Agent': (
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                    'AppleWebKit/537.36 (KHTML, like Gecko) '
+                    'Chrome/120.0.0.0 Safari/537.36'
+                )
+            }
+        )
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            raw = resp.read().decode('utf-8', errors='ignore')
 
+        raw = re.sub(r'<script[^>]*>.*?</script>', ' ', raw, flags=re.DOTALL | re.IGNORECASE)
+        raw = re.sub(r'<style[^>]*>.*?</style>',  ' ', raw, flags=re.DOTALL | re.IGNORECASE)
+
+        paragraphs = re.findall(r'<p[^>]*>(.*?)</p>', raw, flags=re.DOTALL | re.IGNORECASE)
+
+        if not paragraphs:
+            text = re.sub(r'<[^>]+>', ' ', raw)
+        else:
+            text = ' '.join(paragraphs)
+
+        text = re.sub(r'<[^>]+>', ' ', text)
+        text = html.unescape(text)
+
+        # Remove citation brackets [ 1 ], [1], [ 12 ]
+        text = re.sub(r'\[\s*\d+\s*\]', '', text)
+        text = re.sub(r'\[\s*edit\s*\]', '', text, flags=re.IGNORECASE)
+
+        # Fix spaces before punctuation: "programmed ." → "programmed."
+        text = re.sub(r'\s+([,\.;:])', r'\1', text)
+
+        text = re.sub(r'\s+', ' ', text).strip()
+
+        words = text.split()
+        return ' '.join(words[:max_words]) if words else None
+
+    except Exception as e:
+        print(f"  Fetch failed for {url}: {e}")
+        return None
+
+
+def clean_snippet(text, max_words=300):
+    if not text:
+        return ''
+    text = html.unescape(text)
+    text = re.sub(r'\[\s*\d+\s*\]', '', text)
+    text = re.sub(r'\[\s*edit\s*\]', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'\s+([,\.;:])', r'\1', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    words = text.split()
+    snippet = ' '.join(words[:max_words])
+    last_dot = snippet.rfind('.')
+    if last_dot > len(snippet) * 0.6:
+        snippet = snippet[:last_dot + 1]
+    return snippet.strip()
+
+# ------------------------------------------------------------------ MAIN FUNCTION
+ 
 def search_articles(query, max_results=6):
     """
-    Try DuckDuckGo first. If it returns nothing (rate-limited),
-    fall back to returning Google search links directly.
+    1. Search DuckDuckGo for the query.
+    2. Fetch each result URL and extract real paragraph text.
+    3. Return a list of dicts with title, url, and scraped content.
     """
-    # ── Try DuckDuckGo ─────────────────────────────────────────
+    urls_to_fetch = []
+ 
+    # Step 1 — get URLs from DDG
     try:
         with DDGS() as ddgs:
             results = list(ddgs.text(query, max_results=max_results))
-
         if results:
-            articles = []
-            for r in results:
-                articles.append({
-                    'title':       r.get('title', 'No title'),
-                    'url':         r.get('href',  '#'),
-                    'description': r.get('body',  '')[:200],
-                })
-            return articles, None
-
+            urls_to_fetch = [
+                {'title': r.get('title', 'No title'), 'url': r.get('href', '#')}
+                for r in results if r.get('href')
+            ]
+            print(f"DDG returned {len(urls_to_fetch)} results.")
     except Exception as e:
         print(f"DDG error: {e}")
-
-    # ── Fallback: return Google search links ───────────────────
-    # DDG was rate-limited — give user direct Google search links
-    import urllib.parse
-    encoded = urllib.parse.quote_plus(query)
-
-    fallback = [
-        {
-            'title':       f'Google Search: {query}',
-            'url':         f'https://www.google.com/search?q={encoded}',
-            'description': f'Search Google for articles about "{query}".',
-        },
-        {
-            'title':       f'Google Scholar: {query}',
-            'url':         f'https://scholar.google.com/scholar?q={encoded}',
-            'description': f'Find academic papers and research articles about "{query}".',
-        },
-        {
-            'title':       f'Wikipedia: {query}',
-            'url':         f'https://en.wikipedia.org/wiki/Special:Search?search={encoded}',
-            'description': f'Read the Wikipedia article about "{query}".',
-        },
-        {
-            'title':       f'arXiv: {query}',
-            'url':         f'https://arxiv.org/search/?query={encoded}&searchtype=all',
-            'description': f'Find research papers on arXiv about "{query}".',
-        },
-    ]
-    return fallback, None
-
-# ---------------- PDF EXTRACTION ----------------
+ 
+    # Fallback URLs if DDG fails
+    if not urls_to_fetch:
+        enc = urllib.parse.quote_plus(query)
+        urls_to_fetch = [
+            {'title': f'Wikipedia: {query}', 'url': f'https://en.wikipedia.org/wiki/Special:Search?search={enc}&go=Go'},
+            {'title': f'arXiv: {query}',     'url': f'https://arxiv.org/search/?query={enc}&searchtype=all'},
+        ]
+ 
+    # Step 2 — scrape each URL for real text
+    articles = []
+    for item in urls_to_fetch:
+        url   = item['url']
+        title = item['title']
+        print(f"  Fetching: {url}")
+ 
+        text = fetch_page_text(url, max_words=300)
+        snippet = clean_snippet(text, max_words=300) if text else (
+            f"Could not retrieve content from this page. Visit: {url}"
+        )
+ 
+        articles.append({
+            'title':       title,
+            'url':         url,
+            'description': snippet,   # full scraped paragraph text
+        })
+ 
+    return articles, None
+# ------------------------------------------------------------------ PDF EXTRACT
 
 def extract_text_from_pdf(pdf_file):
     try:
-        pdf_content = pdf_file.read()
-        doc  = fitz.open(stream=pdf_content, filetype="pdf")
-        text = ''.join(page.get_text() for page in doc)
+        data = pdf_file.read()
+        doc  = fitz.open(stream=data, filetype="pdf")
+        text = ''.join(p.get_text() for p in doc)
         doc.close()
         return ' '.join(text.split()) or None
     except Exception as e:
         print(f"PDF error: {e}")
         return None
 
-
-# ---------------- VIEWS ----------------
+# ------------------------------------------------------------------ VIEWS
 
 def landing_page(request):
     if request.user.is_authenticated:
@@ -319,8 +392,7 @@ def signup(request):
             login(request, user)
             messages.success(request, f'Welcome {user.username}!')
             return redirect('dashboard')
-        else:
-            messages.error(request, 'Fix errors below.')
+        messages.error(request, 'Fix errors below.')
     else:
         form = CustomUserCreationForm()
     return render(request, 'core/signup.html', {'form': form})
@@ -328,50 +400,41 @@ def signup(request):
 
 @login_required
 def dashboard(request):
-    context = {
-        'error':    None,
-        'summary':  None,
-        'articles': None,
-        'search_query': '',
-        'search_error': None,
-    }
+    context = {'error': None, 'summary': None, 'articles': None,
+               'search_query': '', 'search_error': None}
 
     if request.method == 'POST':
 
-        # ── Article search ─────────────────────────────────────────
+        # Article search
         if 'search_query' in request.POST:
             query = request.POST.get('search_query', '').strip()
             context['search_query'] = query
             if query:
-                articles, search_error = search_articles(query)
-                context['articles']     = articles
-                context['search_error'] = search_error
+                context['articles'], context['search_error'] = search_articles(query)
             else:
                 context['search_error'] = "Please enter a topic to search."
             return render(request, 'core/dashboard.html', context)
 
-        # ── PDF summarization ──────────────────────────────────────
+        # PDF summarization
         if not request.FILES.get('file'):
             context['error'] = "Please upload a PDF file."
             return render(request, 'core/dashboard.html', context)
 
         pdf_file = request.FILES['file']
-
         if not pdf_file.name.lower().endswith('.pdf'):
             context['error'] = "Only PDF files are allowed."
             return render(request, 'core/dashboard.html', context)
 
-        extracted_text = extract_text_from_pdf(pdf_file)
-        if not extracted_text:
+        extracted = extract_text_from_pdf(pdf_file)
+        if not extracted:
             context['error'] = "No readable text found in this PDF."
             return render(request, 'core/dashboard.html', context)
 
-        summary, error = summarize_text_locally(extracted_text)
-
+        summary, error = summarize_text_locally(extracted)
         if summary:
             request.session['last_summary'] = summary
             context['summary'] = summary
-            messages.success(request, "✅ Summary generated!")
+            messages.success(request, f"Summary generated! ({len(summary.split()):,} words)")
         else:
             context['error'] = error or "Failed to generate summary."
             messages.error(request, context['error'])
@@ -381,12 +444,10 @@ def dashboard(request):
 
 @login_required
 def download_summary_pdf(request):
-    """Serve the last generated summary as a downloadable PDF."""
     summary = request.session.get('last_summary')
     if not summary:
         messages.error(request, "No summary found. Please generate one first.")
         return redirect('dashboard')
-
     buffer   = generate_summary_pdf(summary)
     filename = f"summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
     response = HttpResponse(buffer, content_type='application/pdf')

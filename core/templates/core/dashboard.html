@@ -1,205 +1,492 @@
 <!-- core/templates/core/dashboard.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>AI Summarizer - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #080c14;
+            --bg-card: #0d1320;
+            --bg-card-hover: #111928;
+            --border: #1e2d45;
+            --border-glow: #2a4a7f;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-purple: #8b5cf6;
+            --text-primary: #e8edf5;
+            --text-secondary: #7a8ba3;
+            --text-muted: #4a5a72;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            min-height: 100vh;
+            background-image:
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59,130,246,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 30% at 80% 80%, rgba(6,182,212,0.04) 0%, transparent 50%);
+        }
+
+        h1, h2, h3, .font-display {
+            font-family: 'Syne', sans-serif;
+        }
+
+        /* NAV */
+        .nav-bar {
+            background: rgba(8,12,20,0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            transition: border-color 0.25s, box-shadow 0.25s;
+        }
+        .card:hover {
+            border-color: var(--border-glow);
+            box-shadow: 0 0 0 1px rgba(59,130,246,0.1), 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        /* INPUTS */
+        .field {
+            width: 100%;
+            padding: 10px 14px;
+            background: #0a1120;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.92rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+        .field:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+        }
+        .field::placeholder { color: var(--text-muted); }
+
+        /* FILE INPUT */
+        .file-zone {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 28px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            position: relative;
+        }
+        .file-zone:hover, .file-zone.active {
+            border-color: var(--accent-blue);
+            background: rgba(59,130,246,0.04);
+        }
+        .file-zone input[type="file"] {
+            position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+        }
+
+        /* BUTTONS */
+        .btn-primary {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 10px 22px; border-radius: 10px; font-weight: 600;
+            font-family: 'Syne', sans-serif; font-size: 0.88rem; letter-spacing: 0.03em;
+            transition: all 0.2s; cursor: pointer; border: none;
+            background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+            color: #fff;
+            box-shadow: 0 2px 12px rgba(59,130,246,0.25);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #60a5fa, var(--accent-blue));
+            box-shadow: 0 4px 20px rgba(59,130,246,0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-green {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 10px 22px; border-radius: 10px; font-weight: 600;
+            font-family: 'Syne', sans-serif; font-size: 0.88rem; letter-spacing: 0.03em;
+            transition: all 0.2s; cursor: pointer; border: none;
+            background: linear-gradient(135deg, var(--accent-green), #059669);
+            color: #fff;
+            box-shadow: 0 2px 12px rgba(16,185,129,0.25);
+        }
+        .btn-green:hover {
+            box-shadow: 0 4px 20px rgba(16,185,129,0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-purple {
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 8px 18px; border-radius: 8px; font-weight: 600;
+            font-family: 'Syne', sans-serif; font-size: 0.83rem;
+            transition: all 0.2s; cursor: pointer; border: none;
+            background: linear-gradient(135deg, var(--accent-purple), #7c3aed);
+            color: #fff;
+        }
+        .btn-purple:hover {
+            box-shadow: 0 4px 18px rgba(139,92,246,0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 8px 18px; border-radius: 8px; font-weight: 600;
+            font-family: 'Syne', sans-serif; font-size: 0.83rem;
+            transition: all 0.2s; cursor: pointer; border: none;
+            background: rgba(239,68,68,0.15);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: #f87171;
+        }
+        .btn-danger:hover {
+            background: rgba(239,68,68,0.25);
+            border-color: #ef4444;
+            color: #fff;
+        }
+
+        /* BADGES */
+        .badge {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em;
+            text-transform: uppercase; padding: 3px 9px; border-radius: 20px;
+        }
+        .badge-blue { background: rgba(59,130,246,0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+        .badge-cyan { background: rgba(6,182,212,0.12); color: #67e8f9; border: 1px solid rgba(6,182,212,0.25); }
+
+        /* ARTICLE CARD */
+        .article-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 20px;
+            display: flex; gap: 16px; align-items: flex-start;
+            transition: border-color 0.25s, transform 0.2s, box-shadow 0.25s;
+        }
+        .article-card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.35), 0 0 0 1px rgba(59,130,246,0.08);
+        }
+
+        /* SUMMARY SECTION */
+        .summary-card {
+            background: linear-gradient(145deg, #0d1a2e, #0d1520);
+            border: 1px solid rgba(99,102,241,0.3);
+            border-radius: 18px;
+            position: relative;
+            overflow: hidden;
+        }
+        .summary-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue), var(--accent-cyan));
+        }
+        .summary-glow {
+            position: absolute; top: -60px; right: -60px; width: 200px; height: 200px;
+            background: radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* SECTION LABEL */
+        .section-label {
+            display: flex; align-items: center; gap: 10px;
+            font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.05rem;
+            color: var(--text-primary); margin-bottom: 14px;
+        }
+        .section-label .icon-wrap {
+            width: 32px; height: 32px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+        }
+
+        /* LOADING BAR */
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        .loading-bar {
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-purple));
+            border-radius: 2px;
+            position: relative; overflow: hidden;
+        }
+        .loading-bar::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 1.2s infinite;
+        }
+
+        /* TOAST MESSAGES */
+        .toast {
+            border-radius: 10px; padding: 12px 16px;
+            display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+        }
+        .toast-success { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; }
+        .toast-error   { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
+        .toast-warning { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); color: #fcd34d; }
+
+        /* DIVIDER */
+        .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+        /* SCROLL FADE-IN */
+        .fade-up {
+            opacity: 0; transform: translateY(18px);
+            animation: fadeUp 0.45s ease forwards;
+        }
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .delay-1 { animation-delay: 0.06s; }
+        .delay-2 { animation-delay: 0.12s; }
+        .delay-3 { animation-delay: 0.18s; }
+        .delay-4 { animation-delay: 0.24s; }
+    </style>
 </head>
 
-<body class="bg-gray-900 text-white min-h-screen">
+<body>
 
-<!-- Navigation Bar — unchanged -->
-<nav class="bg-gray-800 shadow-lg">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-            <div class="flex items-center">
-                <h1 class="text-xl font-bold">AI Research Paper Summarizer 🚀</h1>
-            </div>
-            <div class="flex items-center space-x-4">
-                <span class="text-gray-300">Welcome, {{ user.username }}!</span>
+<!-- ── NAV ── -->
+<nav class="nav-bar">
+    <div style="max-width:820px; margin:0 auto; padding:0 24px; height:60px; display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#3b82f6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:1rem;">🚀</div>
+            <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;letter-spacing:-0.01em;">Research Summarizer</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+            <span style="color:var(--text-secondary);font-size:0.85rem;">{{ user.username }}</span>
 
-                {% if user.is_staff or user.is_superuser %}
-                <a href="/admin/" target="_blank"
-                   class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                    Admin Panel
-                </a>
-                {% endif %}
+            {% if user.is_staff or user.is_superuser %}
+            <a href="/admin/" target="_blank" class="btn-purple">
+                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                Admin
+            </a>
+            {% endif %}
 
-                <form method="post" action="{% url 'logout' %}" style="display: inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg transition">
-                        Logout
-                    </button>
-                </form>
-            </div>
+            <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-danger">Logout</button>
+            </form>
         </div>
     </div>
 </nav>
 
-<div class="w-full max-w-3xl mx-auto p-6 mt-8">
+<!-- ── MAIN ── -->
+<main style="max-width:820px; margin:0 auto; padding:36px 24px 80px;">
 
-    <!-- Messages — unchanged -->
+    <!-- TOASTS -->
     {% if messages %}
         {% for message in messages %}
-            <div class="mb-4 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-500{% else %}bg-red-500{% endif %}">
-                {{ message }}
-            </div>
+        <div class="toast {% if message.tags == 'success' %}toast-success{% else %}toast-error{% endif %} mb-3 fade-up">
+            <span>{% if message.tags == 'success' %}✓{% else %}✕{% endif %}</span>
+            {{ message }}
+        </div>
         {% endfor %}
     {% endif %}
 
-    <!-- Backend Error — unchanged -->
     {% if error %}
-    <div class="bg-red-500 text-white p-4 rounded-lg mb-4">
-        {{ error }}
+    <div class="toast toast-error mb-4 fade-up">
+        <span>✕</span> {{ error }}
     </div>
     {% endif %}
 
-    <!-- Upload Box — unchanged -->
-    <div class="bg-gray-800 p-6 rounded-2xl shadow-lg">
-        <form method="POST" action="{% url 'dashboard' %}" enctype="multipart/form-data" onsubmit="return validateForm()" class="space-y-4">
+    <!-- ── UPLOAD SECTION ── -->
+    <div class="card p-6 fade-up delay-1">
+        <div class="section-label">
+            <div class="icon-wrap" style="background:rgba(59,130,246,0.12);">📄</div>
+            Summarize a Research Paper
+        </div>
+
+        <form method="POST" action="{% url 'dashboard' %}" enctype="multipart/form-data" onsubmit="return validateForm()" id="uploadForm">
             {% csrf_token %}
-            <div>
-                <label class="block text-gray-300 mb-2">Upload PDF File</label>
-                <input type="file" name="file" id="fileInput" accept=".pdf"
-                       class="w-full p-2 bg-gray-700 rounded-lg cursor-pointer border border-gray-600">
-                <p class="text-gray-500 text-sm mt-1">Only PDF files are accepted</p>
+            <div class="file-zone" id="fileZone">
+                <input type="file" name="file" id="fileInput" accept=".pdf">
+                <div id="fileLabel">
+                    <div style="font-size:2rem;margin-bottom:8px;">📂</div>
+                    <p style="color:var(--text-primary);font-weight:500;font-size:0.95rem;">Drop your PDF here or click to browse</p>
+                    <p style="color:var(--text-muted);font-size:0.82rem;margin-top:4px;">Only .pdf files are accepted</p>
+                </div>
+                <div id="fileSelected" style="display:none;">
+                    <div style="font-size:2rem;margin-bottom:6px;">✅</div>
+                    <p id="fileName" style="color:var(--accent-green);font-weight:600;font-size:0.9rem;"></p>
+                </div>
             </div>
-            <p id="errorMsg" class="text-red-400 hidden text-sm">Please select a file first!</p>
-            <button type="submit"
-                    class="w-full bg-blue-500 hover:bg-blue-600 transition p-2 rounded-lg font-semibold">
-                Summarize
+
+            <p id="errorMsg" style="color:#f87171;font-size:0.83rem;margin-top:8px;display:none;">⚠ Please select a PDF file first.</p>
+
+            <button type="submit" class="btn-primary" style="width:100%;margin-top:14px;" id="submitBtn">
+                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                </svg>
+                Generate Summary
             </button>
-            <p id="loading" class="hidden text-center mt-2 text-gray-400">
-                ⏳ Processing your file...
-            </p>
+
+            <div id="loading" style="display:none;margin-top:14px;">
+                <div class="loading-bar"></div>
+                <p style="color:var(--text-secondary);font-size:0.82rem;text-align:center;margin-top:8px;">⏳ Processing your document…</p>
+            </div>
         </form>
     </div>
 
-    <!-- ── ARTICLE SEARCH BOX (NEW) ── -->
-    <div class="bg-gray-800 p-6 rounded-2xl shadow-lg mt-6">
-        <h2 class="text-lg font-bold mb-3 flex items-center gap-2">
-            🔍 Find Articles on a Topic
-        </h2>
-        <form method="POST" action="{% url 'dashboard' %}" class="flex gap-3">
+    <!-- ── ARTICLE SEARCH ── -->
+    <div class="card p-6 fade-up delay-2" style="margin-top:18px;">
+        <div class="section-label">
+            <div class="icon-wrap" style="background:rgba(6,182,212,0.1);">🔍</div>
+            Find Articles on a Topic
+        </div>
+
+        <form method="POST" action="{% url 'dashboard' %}" style="display:flex;gap:10px;">
             {% csrf_token %}
             <input type="text"
                    name="search_query"
                    value="{{ search_query }}"
-                   placeholder="e.g. machine learning, climate change, neural networks..."
-                   class="flex-1 p-2 bg-gray-700 rounded-lg border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500">
-            <button type="submit"
-                    class="bg-green-600 hover:bg-green-700 transition px-5 py-2 rounded-lg font-semibold whitespace-nowrap">
+                   placeholder="e.g. machine learning, climate change, neural networks…"
+                   class="field" style="flex:1;">
+            <button type="submit" class="btn-green" style="flex-shrink:0;">
                 Search
             </button>
         </form>
     </div>
 
-    <!-- ── SEARCH ERROR ── -->
+    <!-- SEARCH ERROR -->
     {% if search_error %}
-    <div class="bg-red-500 text-white p-4 rounded-lg mt-4">
-        {{ search_error }}
+    <div class="toast toast-error fade-up" style="margin-top:14px;">
+        <span>✕</span> {{ search_error }}
     </div>
     {% endif %}
 
-    <!-- ── ARTICLE RESULTS (NEW) ── -->
-    {% if articles %}
-    <div class="mt-6">
-        <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-            📰 Articles for &ldquo;{{ search_query }}&rdquo;
-        </h2>
-        <div class="space-y-4">
-            {% for article in articles %}
-            <div class="bg-gray-800 border border-gray-700 rounded-2xl p-5 hover:border-blue-500 transition">
-                <div class="flex justify-between items-start gap-4">
-                    <div class="flex-1">
-                        <h3 class="font-semibold text-white text-base mb-1">
-                            {{ article.title }}
-                        </h3>
-                        <p class="text-gray-400 text-sm leading-relaxed mb-3">
-                            {{ article.description }}...
-                        </p>
-                        <span class="text-xs text-gray-500 truncate block">
-                            🔗 {{ article.url|truncatechars:60 }}
-                        </span>
-                    </div>
-                    <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer"
-                       class="flex-shrink-0 bg-blue-600 hover:bg-blue-700 transition px-4 py-2 rounded-lg text-sm font-semibold">
-                        Open ↗
-                    </a>
-                </div>
-            </div>
-            {% endfor %}
+<!-- ── ARTICLE RESULTS ── -->
+{% if articles %}
+<div style="margin-top:26px;" class="fade-up delay-3">
+    <div class="card p-6">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+            <div class="icon-wrap" style="background:rgba(16,185,129,0.1);width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;">📰</div>
+            <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;">Results for "{{ search_query }}"</span>
+            <span class="badge badge-cyan">{{ articles|length }} found</span>
         </div>
-    </div>
-    {% endif %}
 
-    <!-- ── NO RESULTS MESSAGE ── -->
-    {% if articles is not None and not articles and not search_error %}
-    <div class="mt-4 bg-yellow-800 text-yellow-200 p-4 rounded-lg">
-        No articles found for &ldquo;{{ search_query }}&rdquo;. Try a different topic.
-    </div>
-    {% endif %}
-
-    <!-- AI Summary Section — unchanged except download button -->
-    {% if summary %}
-    <div class="mt-6 bg-gradient-to-r from-purple-900 to-blue-900 p-6 rounded-2xl shadow-lg border border-purple-500">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-bold flex items-center">
-                <span class="mr-2">🤖</span>
-                AI Summary
-                <span class="ml-2 text-sm bg-purple-700 px-2 py-1 rounded">Generated by AI</span>
-            </h2>
-            <span class="text-sm text-gray-400">{{ summary|wordcount }} words</span>
-        </div>
-        <div class="text-gray-200 leading-relaxed whitespace-pre-wrap">
-            {{ summary|linebreaks }}
-        </div>
-        <div class="mt-6 pt-4 border-t border-purple-700 flex justify-end">
-            <a href="{% url 'download_summary' %}"
-               class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 transition px-5 py-2 rounded-lg font-semibold text-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+        {% for article in articles %}
+{% if not forloop.last %}
+<div style="padding:16px 0; border-bottom:1px solid var(--border);">
+{% else %}
+<div style="padding:16px 0;">
+{% endif %}
+    <p style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.88rem;color:var(--text-primary);margin:0 0 6px;">{{ article.title }}</p>
+    <p style="color:var(--text-secondary);font-size:0.84rem;line-height:1.65;margin:0;">{{ article.description }}</p>
+</div>
+{% endfor %}
+        <div style="margin-top:18px;display:flex;justify-content:flex-end;">
+            <a href="{% url 'download_summary' %}" class="btn-primary">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                 </svg>
-                Download Summary as PDF
+                Download as PDF
             </a>
         </div>
     </div>
+</div>
+{% endif %}
+    <!-- NO RESULTS -->
+    {% if articles is not None and not articles and not search_error %}
+    <div class="toast toast-warning fade-up" style="margin-top:14px;">
+        <span>⚠</span> No articles found for "{{ search_query }}". Try a different topic.
+    </div>
     {% endif %}
 
-</div>
+    <!-- ── AI SUMMARY ── -->
+    {% if summary %}
+    <div class="summary-card p-6 fade-up delay-4" style="margin-top:26px;">
+        <div class="summary-glow"></div>
+        <div style="position:relative;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <div>
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+                        <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;">AI Summary</span>
+                        <span class="badge badge-blue">AI Generated</span>
+                    </div>
+                    <p style="color:var(--text-muted);font-size:0.8rem;">{{ summary|wordcount }} words</p>
+                </div>
+                <div style="font-size:2rem;opacity:0.6;">🤖</div>
+            </div>
 
-<!-- Script — unchanged -->
+            <hr class="divider">
+
+            <div style="color:var(--text-secondary);line-height:1.75;font-size:0.93rem;">
+                {{ summary|linebreaks }}
+            </div>
+
+            <hr class="divider">
+
+            <div style="display:flex;justify-content:flex-end;">
+                <a href="{% url 'download_summary' %}" class="btn-primary">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Download PDF
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</main>
+
 <script>
+// File input handling
+const fileInput  = document.getElementById('fileInput');
+const fileZone   = document.getElementById('fileZone');
+const fileLabel  = document.getElementById('fileLabel');
+const fileSelected = document.getElementById('fileSelected');
+const fileNameEl = document.getElementById('fileName');
+const errorMsg   = document.getElementById('errorMsg');
+const loading    = document.getElementById('loading');
+
+fileInput.addEventListener('change', function () {
+    if (this.files && this.files[0]) {
+        const name = this.files[0].name;
+        fileLabel.style.display = 'none';
+        fileSelected.style.display = 'block';
+        fileNameEl.textContent = name;
+        fileZone.classList.add('active');
+        errorMsg.style.display = 'none';
+    }
+});
+
 function validateForm() {
-    const fileInput = document.getElementById("fileInput");
-    const errorMsg  = document.getElementById("errorMsg");
-    const loading   = document.getElementById("loading");
-
     if (!fileInput.value) {
-        errorMsg.classList.remove("hidden");
+        errorMsg.style.display = 'block';
         return false;
     }
-
-    const fileExtension = fileInput.value.split('.').pop().toLowerCase();
-    if (fileExtension !== 'pdf') {
-        errorMsg.textContent = 'Please select a PDF file only!';
-        errorMsg.classList.remove("hidden");
+    const ext = fileInput.value.split('.').pop().toLowerCase();
+    if (ext !== 'pdf') {
+        errorMsg.textContent = '⚠ Please select a PDF file only!';
+        errorMsg.style.display = 'block';
         return false;
     }
-
-    errorMsg.classList.add("hidden");
-    loading.classList.remove("hidden");
+    errorMsg.style.display = 'none';
+    loading.style.display = 'block';
     return true;
 }
 
-setTimeout(function() {
-    document.querySelectorAll('.mb-4.p-4.rounded-lg').forEach(function(el) {
-        el.style.display = 'none';
+// Auto-dismiss toasts
+setTimeout(function () {
+    document.querySelectorAll('.toast').forEach(function (el) {
+        el.style.transition = 'opacity 0.4s';
+        el.style.opacity = '0';
+        setTimeout(() => el.style.display = 'none', 400);
     });
 }, 5000);
 </script>

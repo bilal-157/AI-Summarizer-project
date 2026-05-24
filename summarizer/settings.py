@@ -32,6 +32,7 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    "core",
     "jazzmin",
     
     'django.contrib.admin',
@@ -40,7 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'core',
+    
 ]
 
 MIDDLEWARE = [
@@ -59,7 +60,7 @@ ROOT_URLCONF = 'summarizer.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -132,3 +133,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/accounts/login/'  # Where to redirect if not logged in
 LOGIN_REDIRECT_URL = '/dashboard/'  # Where to go after login
 LOGOUT_REDIRECT_URL = '/accounts/login/'  # Where to go after logout
+
+
+# Add these instead:
+EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST          = 'smtp.gmail.com'
+EMAIL_PORT          = 587
+EMAIL_USE_TLS       = True
+EMAIL_HOST_USER     = 'rafiqueb087@gmail.com'       # your Gmail address
+EMAIL_HOST_PASSWORD = 'szgyewjlkimrahoo'  # Gmail App Password (16 chars)
+DEFAULT_FROM_EMAIL  = 'rafiqueb087@gmail.com'

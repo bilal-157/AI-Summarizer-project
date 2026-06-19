@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse
 from .forms import CustomUserCreationForm
+from .models import SearchHistory, SummaryHistory
+
 # ------------------------------------------------------------------ For Data Extraction From The Urls
 import urllib.parse
 import urllib.request
@@ -34,9 +36,9 @@ from datetime import datetime
 # ------------------------------------------------------------------ CONSTANTS
 MAX_PDF_WORDS            = 25_000
 TARGET_SUMMARY_WORDS_MIN = 2_000
-CHUNK_SIZE               = 400   # slightly bigger = fewer chunks total
-MAX_CHUNKS               = 20    # cap total chunks
-MINI_BATCH_SIZE          = 3     # process 3 chunks at a time to avoid RAM freeze
+CHUNK_SIZE               = 400
+MAX_CHUNKS               = 20
+MINI_BATCH_SIZE          = 3
 
 # ------------------------------------------------------------------ MODEL LOAD
 print("sshleifer/distilbart-cnn-6-6 ...")
@@ -67,6 +69,22 @@ def chunk_text(text, chunk_size=CHUNK_SIZE):
         chunks = merged
     return chunks
 
+# ------------------------------------------------------------------ DEDUPLICATION
+# FIX: Added deduplication to remove near-identical sentences across chunks
+
+def deduplicate_summaries(summaries):
+    """
+    Remove near-duplicate sentences across chunk summaries.
+    Uses a 10-word fingerprint from the start of each sentence to detect overlaps.
+    """
+    seen = []
+    for s in summaries:
+        words = s.lower().split()
+        fingerprint = ' '.join(words[:10])
+        if not any(fingerprint in existing.lower() for existing in seen):
+            seen.append(s)
+    return seen
+
 # ------------------------------------------------------------------ MINI-BATCH SUMMARIZE
 
 def summarize_chunks_batched(chunks, mini_batch_size=MINI_BATCH_SIZE):
@@ -96,11 +114,11 @@ def summarize_chunks_batched(chunks, mini_batch_size=MINI_BATCH_SIZE):
                 attention_mask       = enc["attention_mask"],
                 max_new_tokens       = 180,
                 min_new_tokens       = 80,
-                num_beams            = 1,      # greedy — fastest
-                early_stopping       = False,  # must be False when num_beams=1
-                no_repeat_ngram_size = 0,
+                num_beams            = 1,
+                early_stopping       = False,
+                no_repeat_ngram_size = 3,        # FIX: was 0 — now blocks repeating 3-grams
                 length_penalty       = 1.0,
-                repetition_penalty   = 1.0,
+                repetition_penalty   = 1.3,      # FIX: was 1.0 — now penalises repeated tokens
             )
 
         decoded = [
@@ -109,7 +127,6 @@ def summarize_chunks_batched(chunks, mini_batch_size=MINI_BATCH_SIZE):
         ]
         all_summaries.extend(decoded)
 
-        # Free GPU/CPU memory after each mini-batch
         del enc, out_ids
         if _device.type == "cuda":
             torch.cuda.empty_cache()
@@ -147,7 +164,8 @@ def pad_to_min_words(summary, source, min_words=TARGET_SUMMARY_WORDS_MIN):
         low    = summary.lower()
         extras, added = [], 0
         for s in ranked:
-            if ' '.join(s.lower().split()[:6]) in low:
+            # FIX: was checking only 6 words — now checks 12 for stronger dedup
+            if ' '.join(s.lower().split()[:12]) in low:
                 continue
             extras.append(s)
             added += len(s.split())
@@ -174,26 +192,25 @@ def summarize_text_locally(text):
                 f"Please upload one under {MAX_PDF_WORDS:,} words."
             )
 
-        source = text  # keep original for padding safety-net
+        source = text
 
-        # 1 — Chunk
         chunks = chunk_text(text)
         print(f"Chunks: {len(chunks)}")
 
-        # 2 — Mini-batched greedy generation (no RAM freeze)
         print(f"Batch generating for {len(chunks)} chunks "
               f"in mini-batches of {MINI_BATCH_SIZE} ...")
         summaries = summarize_chunks_batched(chunks)
 
-        # 3 — Join
+        # FIX: Deduplicate chunk summaries before joining to remove repeated sentences
+        summaries = deduplicate_summaries(summaries)
+        print(f"After deduplication: {len(summaries)} unique chunks")
+
         final = ' '.join(summaries)
         print(f"After generation: {len(final.split())} words")
 
-        # 4 — Clean
         final = clean_summary(final)
         print(f"After cleanup: {len(final.split())} words")
 
-        # 5 — Guarantee >= 2000 words
         final = pad_to_min_words(final, source)
         print(f"Final: {len(final.split())} words")
         return final, None
@@ -280,13 +297,9 @@ def fetch_page_text(url, max_words=300, timeout=6):
         text = re.sub(r'<[^>]+>', ' ', text)
         text = html.unescape(text)
 
-        # Remove citation brackets [ 1 ], [1], [ 12 ]
         text = re.sub(r'\[\s*\d+\s*\]', '', text)
         text = re.sub(r'\[\s*edit\s*\]', '', text, flags=re.IGNORECASE)
-
-        # Fix spaces before punctuation: "programmed ." → "programmed."
         text = re.sub(r'\s+([,\.;:])', r'\1', text)
-
         text = re.sub(r'\s+', ' ', text).strip()
 
         words = text.split()
@@ -312,17 +325,11 @@ def clean_snippet(text, max_words=300):
         snippet = snippet[:last_dot + 1]
     return snippet.strip()
 
-# ------------------------------------------------------------------ MAIN FUNCTION
- 
+# ------------------------------------------------------------------ SEARCH ARTICLES
+
 def search_articles(query, max_results=6):
-    """
-    1. Search DuckDuckGo for the query.
-    2. Fetch each result URL and extract real paragraph text.
-    3. Return a list of dicts with title, url, and scraped content.
-    """
     urls_to_fetch = []
- 
-    # Step 1 — get URLs from DDG
+
     try:
         with DDGS() as ddgs:
             results = list(ddgs.text(query, max_results=max_results))
@@ -334,34 +341,33 @@ def search_articles(query, max_results=6):
             print(f"DDG returned {len(urls_to_fetch)} results.")
     except Exception as e:
         print(f"DDG error: {e}")
- 
-    # Fallback URLs if DDG fails
+
     if not urls_to_fetch:
         enc = urllib.parse.quote_plus(query)
         urls_to_fetch = [
             {'title': f'Wikipedia: {query}', 'url': f'https://en.wikipedia.org/wiki/Special:Search?search={enc}&go=Go'},
             {'title': f'arXiv: {query}',     'url': f'https://arxiv.org/search/?query={enc}&searchtype=all'},
         ]
- 
-    # Step 2 — scrape each URL for real text
+
     articles = []
     for item in urls_to_fetch:
         url   = item['url']
         title = item['title']
         print(f"  Fetching: {url}")
- 
+
         text = fetch_page_text(url, max_words=300)
         snippet = clean_snippet(text, max_words=300) if text else (
             f"Could not retrieve content from this page. Visit: {url}"
         )
- 
+
         articles.append({
             'title':       title,
             'url':         url,
-            'description': snippet,   # full scraped paragraph text
+            'description': snippet,
         })
- 
+
     return articles, None
+
 # ------------------------------------------------------------------ PDF EXTRACT
 
 def extract_text_from_pdf(pdf_file):
@@ -411,7 +417,24 @@ def dashboard(request):
             query = request.POST.get('search_query', '').strip()
             context['search_query'] = query
             if query:
-                context['articles'], context['search_error'] = search_articles(query)
+                articles, error = search_articles(query)
+                context['articles']     = articles
+                context['search_error'] = error
+
+                # Store combined article text in session for download
+                if articles:
+                    combined = f"Search results for: {query}\n\n"
+                    for i, a in enumerate(articles, 1):
+                        combined += f"{i}. {a['title']}\n{a['description']}\n\n"
+                    request.session['last_summary'] = combined
+
+                SearchHistory.objects.create(
+                    user          = request.user,
+                    user_email    = request.user.email,
+                    query         = query,
+                    results_count = len(articles) if articles else 0,
+                    had_error     = bool(error),
+                )
             else:
                 context['search_error'] = "Please enter a topic to search."
             return render(request, 'core/dashboard.html', context)
@@ -435,12 +458,30 @@ def dashboard(request):
         if summary:
             request.session['last_summary'] = summary
             context['summary'] = summary
-            messages.success(request, f"Summary generated! ({len(summary.split()):,} words)")
+            word_count = len(summary.split())
+            messages.success(request, f"Summary generated! ({word_count:,} words)")
+
+            SummaryHistory.objects.create(
+                user               = request.user,
+                user_email         = request.user.email,
+                filename           = pdf_file.name,
+                summary_word_count = word_count,
+            )
         else:
             context['error'] = error or "Failed to generate summary."
             messages.error(request, context['error'])
 
     return render(request, 'core/dashboard.html', context)
+
+
+@login_required
+def history(request):
+    searches  = SearchHistory.objects.filter(user=request.user)[:20]
+    summaries = SummaryHistory.objects.filter(user=request.user)[:20]
+    return render(request, 'core/history.html', {
+        'searches':  searches,
+        'summaries': summaries,
+    })
 
 
 @login_required

@@ -1,0 +1,311 @@
+<!-- core/templates/core/history.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Research Summarizer — History</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,300&family=Cabinet+Grotesk:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --page:       #f4f6fb;
+            --surface:    #ffffff;
+            --surface-2:  #f8f9fc;
+            --border:     #e2e7f0;
+            --border-hi:  #c5cfe8;
+            --blue:       #2563eb;
+            --blue-light: #eff4ff;
+            --blue-mid:   #bfcffd;
+            --green:      #059669;
+            --green-light:#ecfdf5;
+            --green-mid:  #a7f3d0;
+            --red:        #dc2626;
+            --red-light:  #fef2f2;
+            --amber:      #d97706;
+            --amber-light:#fffbeb;
+            --purple:     #7c3aed;
+            --purple-light:#f5f3ff;
+            --purple-mid: #ddd6fe;
+            --text-1:     #0f172a;
+            --text-2:     #475569;
+            --text-3:     #94a3b8;
+            --text-4:     #cbd5e1;
+            --r:          12px;
+            --r-lg:       18px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Cabinet Grotesk', sans-serif;
+            background: var(--page);
+            color: var(--text-1);
+            min-height: 100vh;
+        }
+
+        /* ── NAV ── */
+        .nav {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(255,255,255,0.88);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-inner {
+            max-width: 860px; margin: 0 auto;
+            padding: 0 28px; height: 62px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .brand { display: flex; align-items: center; gap: 10px; }
+        .brand-icon {
+            width: 34px; height: 34px; border-radius: 9px;
+            background: linear-gradient(135deg, var(--blue), #818cf8);
+            display: grid; place-items: center; font-size: 1rem;
+        }
+        .brand-name {
+            font-family: 'Fraunces', serif; font-weight: 700;
+            font-size: 1.05rem; letter-spacing: -0.02em; color: var(--text-1);
+        }
+        .brand-name span { color: var(--blue); }
+
+        .nav-right { display: flex; align-items: center; gap: 8px; }
+        .user-chip {
+            padding: 4px 12px; border-radius: 20px;
+            background: var(--surface-2); border: 1px solid var(--border);
+            font-size: 0.78rem; color: var(--text-2); font-weight: 500;
+        }
+
+        /* ── BUTTONS ── */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+            border: none; cursor: pointer; font-family: 'Cabinet Grotesk', sans-serif;
+            font-weight: 700; font-size: 0.85rem; letter-spacing: 0.01em;
+            transition: all 0.17s; white-space: nowrap; text-decoration: none;
+        }
+        .btn:hover { transform: translateY(-1px); }
+        .btn:active { transform: translateY(0) scale(0.99); }
+
+        .btn-blue {
+            background: var(--blue); color: #fff;
+            padding: 11px 22px; border-radius: var(--r);
+            box-shadow: 0 1px 3px rgba(37,99,235,0.25), 0 4px 12px rgba(37,99,235,0.15);
+        }
+        .btn-blue:hover { background: #1d4ed8; }
+
+        .btn-purple {
+            background: var(--purple); color: #fff;
+            padding: 7px 14px; border-radius: 8px; font-size: 0.78rem;
+        }
+        .btn-purple:hover { background: #6d28d9; }
+
+        .btn-ghost-red {
+            background: var(--red-light); border: 1px solid #fecaca;
+            color: var(--red); padding: 7px 14px; border-radius: 8px; font-size: 0.78rem;
+        }
+        .btn-ghost-red:hover { background: #fee2e2; border-color: #fca5a5; }
+
+        /* ── CARDS ── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            box-shadow: 0 1px 3px rgba(15,23,42,0.04), 0 4px 16px rgba(15,23,42,0.04);
+        }
+        .card-pad { padding: 28px 30px; }
+
+        /* ── SECTION HEAD ── */
+        .sec-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+        .sec-icon {
+            width: 38px; height: 38px; border-radius: 10px;
+            display: grid; place-items: center; font-size: 1.05rem; flex-shrink: 0;
+        }
+        .sec-title {
+            font-family: 'Fraunces', serif; font-weight: 700;
+            font-size: 1.1rem; letter-spacing: -0.02em; color: var(--text-1);
+        }
+        .sec-sub { font-size: 0.77rem; color: var(--text-3); margin-top: 2px; }
+
+        /* ── HERO ── */
+        .hero { padding: 28px 0 8px; }
+        .hero h1 {
+            font-family: 'Fraunces', serif; font-weight: 700;
+            font-size: 2rem; letter-spacing: -0.04em; color: var(--text-1);
+            line-height: 1.15; margin-bottom: 8px;
+        }
+        .hero h1 span { color: var(--blue); }
+        .hero p { color: var(--text-3); font-size: 0.9rem; max-width: 400px; line-height: 1.6; }
+
+        /* ── TABLE ── */
+        .hist-table { width: 100%; border-collapse: collapse; }
+        .hist-table th {
+            text-align: left; font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 0.06em; text-transform: uppercase;
+            color: var(--text-3); padding: 0 16px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .hist-table td {
+            padding: 14px 16px; font-size: 0.88rem; color: var(--text-2);
+            border-bottom: 1px solid var(--border); vertical-align: middle;
+        }
+        .hist-table tr:last-child td { border-bottom: none; }
+        .hist-table tr:hover td { background: var(--surface-2); }
+
+        /* ── PILLS ── */
+        .pill {
+            display: inline-flex; align-items: center;
+            padding: 3px 10px; border-radius: 20px;
+            font-size: 0.7rem; font-weight: 700;
+        }
+        .pill-blue  { background: var(--blue-light);   color: var(--blue);   border: 1px solid var(--blue-mid); }
+        .pill-green { background: var(--green-light);  color: var(--green);  border: 1px solid var(--green-mid); }
+        .pill-red   { background: var(--red-light);    color: var(--red);    border: 1px solid #fecaca; }
+        .pill-purple{ background: var(--purple-light); color: var(--purple); border: 1px solid var(--purple-mid); }
+
+        /* ── EMPTY STATE ── */
+        .empty {
+            text-align: center; padding: 48px 24px;
+            color: var(--text-3); font-size: 0.9rem;
+        }
+        .empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+
+        /* ── ANIMATIONS ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .anim { opacity: 0; animation: fadeUp 0.45s ease forwards; }
+        .d0 { animation-delay: 0.00s; }
+        .d1 { animation-delay: 0.07s; }
+        .d2 { animation-delay: 0.14s; }
+        .d3 { animation-delay: 0.21s; }
+
+        .stack {
+            max-width: 860px; margin: 0 auto;
+            padding: 0 28px 90px;
+            display: flex; flex-direction: column; gap: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ══ NAV ══ -->
+<nav class="nav">
+    <div class="nav-inner">
+        <div class="brand">
+            <div class="brand-icon">📡</div>
+            <span class="brand-name">Research<span>AI</span></span>
+        </div>
+        <div class="nav-right">
+            <a href="{% url 'dashboard' %}" class="btn btn-blue" style="padding:7px 14px; font-size:0.78rem;">
+                ← Dashboard
+            </a>
+            <span class="user-chip">👤 {{ user.username }}</span>
+            {% if user.is_staff or user.is_superuser %}
+            <a href="/admin/" target="_blank" class="btn btn-purple">Admin</a>
+            {% endif %}
+            <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-ghost-red">Sign out</button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<!-- ══ MAIN ══ -->
+<main class="stack">
+
+    <!-- HERO -->
+    <div class="hero anim d0">
+        <h1>Your <span>Activity</span> History</h1>
+        <p>A log of all your searches and PDF summaries tied to your account.</p>
+    </div>
+
+    <!-- ══ SEARCH HISTORY ══ -->
+    <div class="card card-pad anim d1">
+        <div class="sec-head">
+            <div class="sec-icon" style="background:var(--green-light); border:1.5px solid var(--green-mid);">🔍</div>
+            <div>
+                <div class="sec-title">Search History</div>
+                <div class="sec-sub">Last 20 searches · {{ user.email }}</div>
+            </div>
+        </div>
+
+        {% if searches %}
+        <table class="hist-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Query</th>
+                    <th>Results</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in searches %}
+                <tr>
+                    <td style="color:var(--text-4); font-size:0.78rem;">{{ forloop.counter }}</td>
+                    <td style="color:var(--text-1); font-weight:500;">{{ s.query }}</td>
+                    <td><span class="pill pill-blue">{{ s.results_count }} articles</span></td>
+                    <td>
+                        {% if s.had_error %}
+                            <span class="pill pill-red">Error</span>
+                        {% else %}
+                            <span class="pill pill-green">OK</span>
+                        {% endif %}
+                    </td>
+                    <td style="color:var(--text-3); font-size:0.8rem;">{{ s.searched_at|date:"d M Y · H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty">
+            <div class="empty-icon">🔍</div>
+            <p>No searches yet. Head to the dashboard and explore a topic.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ══ SUMMARY HISTORY ══ -->
+    <div class="card card-pad anim d2">
+        <div class="sec-head">
+            <div class="sec-icon" style="background:var(--purple-light); border:1.5px solid var(--purple-mid);">📄</div>
+            <div>
+                <div class="sec-title">Summary History</div>
+                <div class="sec-sub">Last 20 summaries · {{ user.email }}</div>
+            </div>
+        </div>
+
+        {% if summaries %}
+        <table class="hist-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>File</th>
+                    <th>Word Count</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in summaries %}
+                <tr>
+                    <td style="color:var(--text-4); font-size:0.78rem;">{{ forloop.counter }}</td>
+                    <td style="color:var(--text-1); font-weight:500;">{{ s.filename }}</td>
+                    <td><span class="pill pill-purple">{{ s.summary_word_count|floatformat:"0" }} words</span></td>
+                    <td style="color:var(--text-3); font-size:0.8rem;">{{ s.summarized_at|date:"d M Y · H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty">
+            <div class="empty-icon">📄</div>
+            <p>No summaries yet. Upload a PDF from the dashboard to get started.</p>
+        </div>
+        {% endif %}
+    </div>
+
+</main>
+
+</body>
+</html>

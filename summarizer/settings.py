@@ -136,10 +136,10 @@ LOGOUT_REDIRECT_URL = '/accounts/login/'  # Where to go after logout
 
 
 # Add these instead:
-EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST          = 'smtp.gmail.com'
-EMAIL_PORT          = 587
-EMAIL_USE_TLS       = True
-EMAIL_HOST_USER     = 'rafiqueb087@gmail.com'       # your Gmail address
-EMAIL_HOST_PASSWORD = 'szgyewjlkimrahoo'  # Gmail App Password (16 chars)
-DEFAULT_FROM_EMAIL  = 'rafiqueb087@gmail.com'
+EMAIL_BACKEND       = ''
+EMAIL_HOST          = ''
+EMAIL_PORT          = ''
+EMAIL_USE_TLS       = ''
+EMAIL_HOST_USER     = ''       # your Gmail address
+EMAIL_HOST_PASSWORD = ''  # Gmail App Password (16 chars)
+DEFAULT_FROM_EMAIL  = ''

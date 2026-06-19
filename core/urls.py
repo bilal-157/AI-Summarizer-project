@@ -8,6 +8,7 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('signup/', views.signup, name='signup'),
     path('download/', views.download_summary_pdf, name='download_summary'),
+    path('history/', views.history, name='history'),  # <-- added
 
     # Password Reset Flow
     path('password-reset/',

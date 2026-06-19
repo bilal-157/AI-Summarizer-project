@@ -1,40 +1,52 @@
 <!-- core/templates/core/dashboard.html -->
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <title>Research Summarizer — Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,300&family=Cabinet+Grotesk:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,300&family=Cabinet+Grotesk:wght@400;500;700;800&display=swap"
+        rel="stylesheet">
     <style>
         :root {
-            --page:       #f4f6fb;
-            --surface:    #ffffff;
-            --surface-2:  #f8f9fc;
-            --border:     #e2e7f0;
-            --border-hi:  #c5cfe8;
-            --blue:       #2563eb;
+            --page: #f4f6fb;
+            --surface: #ffffff;
+            --surface-2: #f8f9fc;
+            --border: #e2e7f0;
+            --border-hi: #c5cfe8;
+            --blue: #2563eb;
             --blue-light: #eff4ff;
-            --blue-mid:   #bfcffd;
-            --green:      #059669;
-            --green-light:#ecfdf5;
-            --green-mid:  #a7f3d0;
-            --red:        #dc2626;
-            --red-light:  #fef2f2;
-            --amber:      #d97706;
-            --amber-light:#fffbeb;
-            --purple:     #7c3aed;
-            --purple-light:#f5f3ff;
+            --blue-mid: #bfcffd;
+            --green: #059669;
+            --green-light: #ecfdf5;
+            --green-mid: #a7f3d0;
+            --red: #dc2626;
+            --red-light: #fef2f2;
+            --amber: #d97706;
+            --amber-light: #fffbeb;
+            --purple: #7c3aed;
+            --purple-light: #f5f3ff;
             --purple-mid: #ddd6fe;
-            --text-1:     #0f172a;
-            --text-2:     #475569;
-            --text-3:     #94a3b8;
-            --text-4:     #cbd5e1;
-            --r:          12px;
-            --r-lg:       18px;
+            --text-1: #0f172a;
+            --text-2: #475569;
+            --text-3: #94a3b8;
+            --text-4: #cbd5e1;
+            --r: 12px;
+            --r-lg: 18px;
         }
 
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; }
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
 
         body {
             font-family: 'Cabinet Grotesk', sans-serif;
@@ -45,530 +57,859 @@
 
         /* ── NAV ── */
         .nav {
-            position: sticky; top: 0; z-index: 100;
-            background: rgba(255,255,255,0.88);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.88);
             backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border);
         }
-        .nav-inner {
-            max-width: 860px; margin: 0 auto;
-            padding: 0 28px; height: 62px;
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        .brand { display: flex; align-items: center; gap: 10px; }
-        .brand-icon {
-            width: 34px; height: 34px; border-radius: 9px;
-            background: linear-gradient(135deg, var(--blue), #818cf8);
-            display: grid; place-items: center; font-size: 1rem;
-        }
-        .brand-name {
-            font-family: 'Fraunces', serif; font-weight: 700;
-            font-size: 1.05rem; letter-spacing: -0.02em; color: var(--text-1);
-        }
-        .brand-name span { color: var(--blue); }
 
-        .nav-right { display: flex; align-items: center; gap: 8px; }
+        .nav-inner {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 62px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            background: linear-gradient(135deg, var(--blue), #818cf8);
+            display: grid;
+            place-items: center;
+            font-size: 1rem;
+        }
+
+        .brand-name {
+            font-family: 'Fraunces', serif;
+            font-weight: 700;
+            font-size: 1.05rem;
+            letter-spacing: -0.02em;
+            color: var(--text-1);
+        }
+
+        .brand-name span {
+            color: var(--blue);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .user-chip {
-            padding: 4px 12px; border-radius: 20px;
-            background: var(--surface-2); border: 1px solid var(--border);
-            font-size: 0.78rem; color: var(--text-2); font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            font-size: 0.78rem;
+            color: var(--text-2);
+            font-weight: 500;
         }
 
         /* ── BUTTONS ── */
         .btn {
-            display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-            border: none; cursor: pointer; font-family: 'Cabinet Grotesk', sans-serif;
-            font-weight: 700; font-size: 0.85rem; letter-spacing: 0.01em;
-            transition: all 0.17s; white-space: nowrap; text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            border: none;
+            cursor: pointer;
+            font-family: 'Cabinet Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 0.01em;
+            transition: all 0.17s;
+            white-space: nowrap;
+            text-decoration: none;
         }
-        .btn:hover { transform: translateY(-1px); }
-        .btn:active { transform: translateY(0) scale(0.99); }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0) scale(0.99);
+        }
 
         .btn-blue {
-            background: var(--blue); color: #fff;
-            padding: 11px 22px; border-radius: var(--r);
-            box-shadow: 0 1px 3px rgba(37,99,235,0.25), 0 4px 12px rgba(37,99,235,0.15);
+            background: var(--blue);
+            color: #fff;
+            padding: 11px 22px;
+            border-radius: var(--r);
+            box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25), 0 4px 12px rgba(37, 99, 235, 0.15);
         }
-        .btn-blue:hover { background: #1d4ed8; box-shadow: 0 2px 8px rgba(37,99,235,0.35); }
+
+        .btn-blue:hover {
+            background: #1d4ed8;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+        }
 
         .btn-green {
-            background: var(--green); color: #fff;
-            padding: 11px 22px; border-radius: var(--r);
-            box-shadow: 0 1px 3px rgba(5,150,105,0.2), 0 4px 12px rgba(5,150,105,0.12);
+            background: var(--green);
+            color: #fff;
+            padding: 11px 22px;
+            border-radius: var(--r);
+            box-shadow: 0 1px 3px rgba(5, 150, 105, 0.2), 0 4px 12px rgba(5, 150, 105, 0.12);
         }
-        .btn-green:hover { background: #047857; box-shadow: 0 2px 8px rgba(5,150,105,0.3); }
+
+        .btn-green:hover {
+            background: #047857;
+            box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+        }
 
         .btn-purple {
-            background: var(--purple); color: #fff;
-            padding: 7px 14px; border-radius: 8px; font-size: 0.78rem;
+            background: var(--purple);
+            color: #fff;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 0.78rem;
         }
-        .btn-purple:hover { background: #6d28d9; }
+
+        .btn-purple:hover {
+            background: #6d28d9;
+        }
 
         .btn-ghost-red {
-            background: var(--red-light); border: 1px solid #fecaca;
-            color: var(--red); padding: 7px 14px; border-radius: 8px; font-size: 0.78rem;
+            background: var(--red-light);
+            border: 1px solid #fecaca;
+            color: var(--red);
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 0.78rem;
         }
-        .btn-ghost-red:hover { background: #fee2e2; border-color: #fca5a5; }
+
+        .btn-ghost-red:hover {
+            background: #fee2e2;
+            border-color: #fca5a5;
+        }
 
         .btn-outline {
-            background: transparent; border: 1.5px solid var(--blue);
-            color: var(--blue); padding: 10px 20px; border-radius: var(--r);
+            background: transparent;
+            border: 1.5px solid var(--blue);
+            color: var(--blue);
+            padding: 10px 20px;
+            border-radius: var(--r);
         }
-        .btn-outline:hover { background: var(--blue-light); }
+
+        .btn-outline:hover {
+            background: var(--blue-light);
+        }
 
         /* ── CARDS ── */
         .card {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--r-lg);
-            box-shadow: 0 1px 3px rgba(15,23,42,0.04), 0 4px 16px rgba(15,23,42,0.04);
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 16px rgba(15, 23, 42, 0.04);
             transition: box-shadow 0.2s, border-color 0.2s;
         }
+
         .card:focus-within {
             border-color: var(--blue-mid);
-            box-shadow: 0 0 0 3px rgba(37,99,235,0.08), 0 4px 16px rgba(15,23,42,0.06);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08), 0 4px 16px rgba(15, 23, 42, 0.06);
         }
-        .card-pad { padding: 28px 30px; }
+
+        .card-pad {
+            padding: 28px 30px;
+        }
 
         /* ── SECTION HEAD ── */
-        .sec-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+        .sec-head {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
         .sec-icon {
-            width: 38px; height: 38px; border-radius: 10px;
-            display: grid; place-items: center; font-size: 1.05rem; flex-shrink: 0;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            font-size: 1.05rem;
+            flex-shrink: 0;
         }
+
         .sec-title {
-            font-family: 'Fraunces', serif; font-weight: 700;
-            font-size: 1.1rem; letter-spacing: -0.02em; color: var(--text-1);
+            font-family: 'Fraunces', serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: -0.02em;
+            color: var(--text-1);
         }
-        .sec-sub { font-size: 0.77rem; color: var(--text-3); margin-top: 2px; }
+
+        .sec-sub {
+            font-size: 0.77rem;
+            color: var(--text-3);
+            margin-top: 2px;
+        }
 
         /* ── DROP ZONE ── */
         .drop-zone {
             border: 2px dashed var(--border-hi);
-            border-radius: var(--r); padding: 38px 24px;
-            text-align: center; cursor: pointer;
+            border-radius: var(--r);
+            padding: 38px 24px;
+            text-align: center;
+            cursor: pointer;
             transition: border-color 0.2s, background 0.2s;
-            position: relative; overflow: hidden;
+            position: relative;
+            overflow: hidden;
             background: var(--surface-2);
         }
-        .drop-zone:hover, .drop-zone.active {
+
+        .drop-zone:hover,
+        .drop-zone.active {
             border-color: var(--blue);
             background: var(--blue-light);
         }
+
         .drop-zone input[type="file"] {
-            position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
         }
+
         .drop-icon {
-            width: 58px; height: 58px; border-radius: 14px; margin: 0 auto 14px;
-            background: var(--blue-light); border: 1.5px solid var(--blue-mid);
-            display: grid; place-items: center; font-size: 1.5rem;
+            width: 58px;
+            height: 58px;
+            border-radius: 14px;
+            margin: 0 auto 14px;
+            background: var(--blue-light);
+            border: 1.5px solid var(--blue-mid);
+            display: grid;
+            place-items: center;
+            font-size: 1.5rem;
             transition: transform 0.2s;
         }
-        .drop-zone:hover .drop-icon { transform: scale(1.07); }
-        .drop-primary { font-weight: 700; font-size: 0.95rem; color: var(--text-1); margin-bottom: 5px; }
-        .drop-hint { font-size: 0.8rem; color: var(--text-3); }
+
+        .drop-zone:hover .drop-icon {
+            transform: scale(1.07);
+        }
+
+        .drop-primary {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-1);
+            margin-bottom: 5px;
+        }
+
+        .drop-hint {
+            font-size: 0.8rem;
+            color: var(--text-3);
+        }
 
         /* ── FIELD ── */
         .field {
-            width: 100%; padding: 11px 15px;
-            background: var(--surface-2); border: 1.5px solid var(--border);
-            border-radius: var(--r); color: var(--text-1);
-            font-family: 'Cabinet Grotesk', sans-serif; font-size: 0.92rem;
-            outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+            width: 100%;
+            padding: 11px 15px;
+            background: var(--surface-2);
+            border: 1.5px solid var(--border);
+            border-radius: var(--r);
+            color: var(--text-1);
+            font-family: 'Cabinet Grotesk', sans-serif;
+            font-size: 0.92rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
+
         .field:focus {
             border-color: var(--blue);
-            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
             background: #fff;
         }
-        .field::placeholder { color: var(--text-4); }
+
+        .field::placeholder {
+            color: var(--text-4);
+        }
 
         /* ── TOASTS ── */
         .toast {
-            display: flex; align-items: flex-start; gap: 11px;
-            padding: 13px 16px; border-radius: var(--r);
-            font-size: 0.88rem; line-height: 1.55;
+            display: flex;
+            align-items: flex-start;
+            gap: 11px;
+            padding: 13px 16px;
+            border-radius: var(--r);
+            font-size: 0.88rem;
+            line-height: 1.55;
             animation: slideDown 0.3s ease both;
         }
+
         .toast-dot {
-            width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex-shrink: 0;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            margin-top: 5px;
+            flex-shrink: 0;
         }
-        .toast-ok  { background: var(--green-light); border: 1px solid var(--green-mid); color: #065f46; }
-        .toast-ok .toast-dot { background: var(--green); }
-        .toast-err { background: var(--red-light); border: 1px solid #fecaca; color: #991b1b; }
-        .toast-err .toast-dot { background: var(--red); }
-        .toast-warn { background: var(--amber-light); border: 1px solid #fde68a; color: #92400e; }
-        .toast-warn .toast-dot { background: var(--amber); }
+
+        .toast-ok {
+            background: var(--green-light);
+            border: 1px solid var(--green-mid);
+            color: #065f46;
+        }
+
+        .toast-ok .toast-dot {
+            background: var(--green);
+        }
+
+        .toast-err {
+            background: var(--red-light);
+            border: 1px solid #fecaca;
+            color: #991b1b;
+        }
+
+        .toast-err .toast-dot {
+            background: var(--red);
+        }
+
+        .toast-warn {
+            background: var(--amber-light);
+            border: 1px solid #fde68a;
+            color: #92400e;
+        }
+
+        .toast-warn .toast-dot {
+            background: var(--amber);
+        }
 
         /* ── LOADING BAR ── */
         .load-bar {
-            height: 3px; border-radius: 3px; overflow: hidden;
+            height: 3px;
+            border-radius: 3px;
+            overflow: hidden;
             background: var(--border);
         }
+
         .load-bar-fill {
-            height: 100%; width: 40%;
+            height: 100%;
+            width: 40%;
             background: linear-gradient(90deg, var(--blue), #818cf8);
             border-radius: 3px;
             animation: loadSlide 1.4s ease-in-out infinite;
         }
+
         @keyframes loadSlide {
-            0%   { transform: translateX(-150%); }
-            100% { transform: translateX(400%); }
+            0% {
+                transform: translateX(-150%);
+            }
+
+            100% {
+                transform: translateX(400%);
+            }
         }
 
         /* ── ARTICLES ── */
         .result-bar {
-            display: flex; align-items: center; justify-content: space-between;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             margin-bottom: 20px;
         }
+
         .count-pill {
-            font-size: 0.72rem; font-weight: 700; padding: 3px 10px;
-            border-radius: 20px; background: var(--blue-light);
-            color: var(--blue); border: 1px solid var(--blue-mid);
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            background: var(--blue-light);
+            color: var(--blue);
+            border: 1px solid var(--blue-mid);
         }
+
         .article-row {
-            padding: 18px 0; border-bottom: 1px solid var(--border);
-            display: flex; gap: 14px;
+            padding: 18px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 14px;
         }
-        .article-row:first-child { padding-top: 0; }
-        .article-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+        .article-row:first-child {
+            padding-top: 0;
+        }
+
+        .article-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
         .art-num {
-            flex-shrink: 0; width: 26px; height: 26px; border-radius: 7px;
-            background: var(--blue-light); border: 1px solid var(--blue-mid);
-            display: grid; place-items: center;
-            font-size: 0.7rem; font-weight: 800; color: var(--blue);
+            flex-shrink: 0;
+            width: 26px;
+            height: 26px;
+            border-radius: 7px;
+            background: var(--blue-light);
+            border: 1px solid var(--blue-mid);
+            display: grid;
+            place-items: center;
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: var(--blue);
         }
-        .art-text { color: var(--text-2); font-size: 0.9rem; line-height: 1.7; }
+
+        .art-text {
+            color: var(--text-2);
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
 
         /* ── SUMMARY ── */
         .summary-card {
             background: var(--surface);
             border: 1.5px solid var(--purple-mid);
             border-radius: var(--r-lg);
-            box-shadow: 0 2px 8px rgba(124,58,237,0.06), 0 8px 24px rgba(15,23,42,0.05);
-            overflow: hidden; position: relative;
+            box-shadow: 0 2px 8px rgba(124, 58, 237, 0.06), 0 8px 24px rgba(15, 23, 42, 0.05);
+            overflow: hidden;
+            position: relative;
         }
+
         .summary-stripe {
             height: 4px;
             background: linear-gradient(90deg, var(--purple), var(--blue), #34d399);
         }
+
         .summary-head {
-            display: flex; align-items: flex-start;
-            justify-content: space-between; margin-bottom: 6px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 6px;
         }
+
         .summary-title {
-            font-family: 'Fraunces', serif; font-weight: 700;
-            font-size: 1.3rem; letter-spacing: -0.03em; color: var(--text-1);
+            font-family: 'Fraunces', serif;
+            font-weight: 700;
+            font-size: 1.3rem;
+            letter-spacing: -0.03em;
+            color: var(--text-1);
         }
+
         .badge-ai {
-            padding: 3px 10px; border-radius: 20px; font-size: 0.65rem;
-            font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase;
-            background: var(--purple-light); color: var(--purple);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            background: var(--purple-light);
+            color: var(--purple);
             border: 1px solid var(--purple-mid);
         }
+
         .summary-stats {
-            display: flex; gap: 16px; flex-wrap: wrap;
-            margin-bottom: 22px; padding-bottom: 18px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 22px;
+            padding-bottom: 18px;
             border-bottom: 1px solid var(--border);
         }
-        .stat { font-size: 0.78rem; color: var(--text-3); }
-        .stat strong { color: var(--text-2); }
-        .summary-body {
-            color: var(--text-2); line-height: 1.82; font-size: 0.93rem;
-            font-family: 'Fraunces', serif; font-weight: 300; font-style: italic;
-        }
-        .summary-body p { margin-bottom: 14px; }
-        .summary-body p:last-child { margin-bottom: 0; }
 
-        hr.div { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
-        .err-text { color: var(--red); font-size: 0.8rem; margin-top: 8px; display: none; }
+        .stat {
+            font-size: 0.78rem;
+            color: var(--text-3);
+        }
+
+        .stat strong {
+            color: var(--text-2);
+        }
+
+        .summary-body {
+            color: var(--text-2);
+            line-height: 1.82;
+            font-size: 0.93rem;
+            font-family: 'Fraunces', serif;
+            font-weight: 300;
+            font-style: italic;
+        }
+
+        .summary-body p {
+            margin-bottom: 14px;
+        }
+
+        .summary-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        hr.div {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 22px 0;
+        }
+
+        .err-text {
+            color: var(--red);
+            font-size: 0.8rem;
+            margin-top: 8px;
+            display: none;
+        }
 
         /* ── HERO ── */
         .hero {
             padding: 28px 0 8px;
         }
+
         .hero h1 {
-            font-family: 'Fraunces', serif; font-weight: 700;
-            font-size: 2rem; letter-spacing: -0.04em; color: var(--text-1);
-            line-height: 1.15; margin-bottom: 8px;
+            font-family: 'Fraunces', serif;
+            font-weight: 700;
+            font-size: 2rem;
+            letter-spacing: -0.04em;
+            color: var(--text-1);
+            line-height: 1.15;
+            margin-bottom: 8px;
         }
-        .hero h1 span { color: var(--blue); }
-        .hero p { color: var(--text-3); font-size: 0.9rem; max-width: 400px; line-height: 1.6; }
+
+        .hero h1 span {
+            color: var(--blue);
+        }
+
+        .hero p {
+            color: var(--text-3);
+            font-size: 0.9rem;
+            max-width: 400px;
+            line-height: 1.6;
+        }
 
         /* ── ANIMATIONS ── */
         @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-8px); }
-            to   { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
+
         @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(16px); }
-            to   { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        .anim { opacity: 0; animation: fadeUp 0.45s ease forwards; }
-        .d0 { animation-delay: 0.00s; }
-        .d1 { animation-delay: 0.07s; }
-        .d2 { animation-delay: 0.14s; }
-        .d3 { animation-delay: 0.21s; }
-        .d4 { animation-delay: 0.28s; }
+
+        .anim {
+            opacity: 0;
+            animation: fadeUp 0.45s ease forwards;
+        }
+
+        .d0 {
+            animation-delay: 0.00s;
+        }
+
+        .d1 {
+            animation-delay: 0.07s;
+        }
+
+        .d2 {
+            animation-delay: 0.14s;
+        }
+
+        .d3 {
+            animation-delay: 0.21s;
+        }
+
+        .d4 {
+            animation-delay: 0.28s;
+        }
 
         .stack {
-            max-width: 860px; margin: 0 auto;
+            max-width: 860px;
+            margin: 0 auto;
             padding: 0 28px 90px;
-            display: flex; flex-direction: column; gap: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
     </style>
 </head>
+
 <body>
 
-<!-- ══ NAV ══ -->
-<nav class="nav">
-    <div class="nav-inner">
-        <div class="brand">
-            <div class="brand-icon">📡</div>
-            <span class="brand-name">Research<span>AI</span></span>
+    <!-- ══ NAV ══ -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <div class="brand">
+                <div class="brand-icon">📡</div>
+                <span class="brand-name">Research<span>AI</span></span>
+            </div>
+            <div class="nav-right">
+                <span class="user-chip">👤 {{ user.username }}</span>
+                {% if user.is_staff or user.is_superuser %}
+                <a href="/admin/" target="_blank" class="btn btn-purple">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Admin
+                </a>
+                {% endif %}
+                <a href="{% url 'history' %}" class="btn btn-purple" style="padding:7px 14px; font-size:0.78rem;">
+                    📋 History
+                </a>
+                <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-ghost-red">Sign out</button>
+                </form>
+            </div>
         </div>
-        <div class="nav-right">
-            <span class="user-chip">👤 {{ user.username }}</span>
-            {% if user.is_staff or user.is_superuser %}
-            <a href="/admin/" target="_blank" class="btn btn-purple">
-                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                Admin
-            </a>
-            {% endif %}
-            <form method="post" action="{% url 'logout' %}" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-ghost-red">Sign out</button>
-            </form>
-        </div>
-    </div>
-</nav>
+    </nav>
 
-<!-- ══ MAIN ══ -->
-<main class="stack">
+    <!-- ══ MAIN ══ -->
+    <main class="stack">
 
-    <!-- TOASTS -->
-    {% if messages %}
+        <!-- TOASTS -->
+        {% if messages %}
         {% for message in messages %}
         <div class="toast {% if message.tags == 'success' %}toast-ok{% else %}toast-err{% endif %} anim d0">
             <div class="toast-dot"></div>
             <span>{{ message }}</span>
         </div>
         {% endfor %}
-    {% endif %}
-    {% if error %}
-    <div class="toast toast-err anim d0">
-        <div class="toast-dot"></div>
-        <span>{{ error }}</span>
-    </div>
-    {% endif %}
-
-    <!-- HERO -->
-    <div class="hero anim d0">
-        <h1>Turn dense papers into<br><span>clear insights.</span></h1>
-        <p>Upload any research PDF or search a topic — get an AI-crafted summary in seconds.</p>
-    </div>
-
-    <!-- ══ UPLOAD ══ -->
-    <div class="card card-pad anim d1">
-        <div class="sec-head">
-            <div class="sec-icon" style="background:var(--blue-light); border:1.5px solid var(--blue-mid);">📄</div>
-            <div>
-                <div class="sec-title">Upload a Paper</div>
-                <div class="sec-sub">PDF only · up to 10 MB</div>
-            </div>
-        </div>
-
-        <form method="POST" action="{% url 'dashboard' %}" enctype="multipart/form-data"
-              onsubmit="return validateUpload()" id="uploadForm">
-            {% csrf_token %}
-
-            <div class="drop-zone" id="dropZone">
-                <input type="file" name="file" id="fileInput" accept=".pdf">
-                <div id="dropDefault">
-                    <div class="drop-icon">📂</div>
-                    <p class="drop-primary">Drop your PDF here</p>
-                    <p class="drop-hint">or click to browse your files</p>
-                </div>
-                <div id="dropSelected" style="display:none;">
-                    <div class="drop-icon" style="background:var(--green-light); border-color:var(--green-mid);">✅</div>
-                    <p class="drop-primary" id="dropFileName" style="color:var(--green);"></p>
-                    <p class="drop-hint">Ready to summarize</p>
-                </div>
-            </div>
-
-            <p id="errMsg" class="err-text">⚠ Please select a PDF file first.</p>
-
-            <button type="submit" class="btn btn-blue" id="submitBtn"
-                    style="width:100%; margin-top:14px; padding:13px; font-size:0.92rem;">
-                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                </svg>
-                Generate Summary
-            </button>
-
-            <div id="loading" style="display:none; margin-top:14px;">
-                <div class="load-bar"><div class="load-bar-fill"></div></div>
-                <p style="color:var(--text-3); font-size:0.8rem; text-align:center; margin-top:9px;">
-                    ⏳ Analysing your document — this may take a moment…
-                </p>
-            </div>
-        </form>
-    </div>
-
-    <!-- ══ SEARCH ══ -->
-    <div class="card card-pad anim d2">
-        <div class="sec-head">
-            <div class="sec-icon" style="background:var(--green-light); border:1.5px solid var(--green-mid);">🔍</div>
-            <div>
-                <div class="sec-title">Explore a Topic</div>
-                <div class="sec-sub">Find and summarize articles from the web</div>
-            </div>
-        </div>
-
-        <form method="POST" action="{% url 'dashboard' %}" style="display:flex; gap:10px;">
-            {% csrf_token %}
-            <input type="text" name="search_query" value="{{ search_query }}"
-                   placeholder="e.g. machine learning, quantum computing, climate change…"
-                   class="field" style="flex:1;">
-            <button type="submit" class="btn btn-green" style="flex-shrink:0;">
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-                Search
-            </button>
-        </form>
-    </div>
-
-    <!-- SEARCH ERROR -->
-    {% if search_error %}
-    <div class="toast toast-err anim d2">
-        <div class="toast-dot"></div>
-        <span>{{ search_error }}</span>
-    </div>
-    {% endif %}
-
-    <!-- NO RESULTS -->
-    {% if articles is not None and not articles and not search_error %}
-    <div class="toast toast-warn anim d3">
-        <div class="toast-dot"></div>
-        <span>No articles found for <strong>"{{ search_query }}"</strong>. Try a different topic.</span>
-    </div>
-    {% endif %}
-
-    <!-- ══ ARTICLE RESULTS ══ -->
-    {% if articles %}
-    <div class="card card-pad anim d3">
-        <div class="result-bar">
-            <div class="sec-head" style="margin-bottom:0;">
-                <div class="sec-icon" style="background:var(--amber-light); border:1.5px solid #fde68a;">📰</div>
-                <div>
-                    <div class="sec-title">Results for "{{ search_query }}"</div>
-                    <div class="sec-sub">Summaries from top sources</div>
-                </div>
-            </div>
-            <span class="count-pill">{{ articles|length }} articles</span>
-        </div>
-
-        {% for article in articles %}
-        {% if article.description and "Could not retrieve" not in article.description %}
-        <div class="article-row">
-            <div class="art-num">{{ forloop.counter }}</div>
-            <p class="art-text">{{ article.description }}</p>
+        {% endif %}
+        {% if error %}
+        <div class="toast toast-err anim d0">
+            <div class="toast-dot"></div>
+            <span>{{ error }}</span>
         </div>
         {% endif %}
-        {% endfor %}
 
-        <div style="margin-top:20px; display:flex; justify-content:flex-end;">
-            <a href="{% url 'download_summary' %}" class="btn btn-blue">
-                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                </svg>
-                Download as PDF
-            </a>
+        <!-- HERO -->
+        <div class="hero anim d0">
+            <h1>Turn dense papers into<br><span>clear insights.</span></h1>
+            <p>Upload any research PDF or search a topic — get an AI-crafted summary in seconds.</p>
         </div>
-    </div>
-    {% endif %}
 
-    <!-- ══ AI SUMMARY ══ -->
-    {% if summary %}
-    <div class="summary-card anim d4">
-        <div class="summary-stripe"></div>
-        <div class="card-pad">
-            <div class="summary-head">
-                <h2 class="summary-title">AI Summary</h2>
-                <span class="badge-ai">✦ AI Generated</span>
+        <!-- ══ UPLOAD ══ -->
+        <div class="card card-pad anim d1">
+            <div class="sec-head">
+                <div class="sec-icon" style="background:var(--blue-light); border:1.5px solid var(--blue-mid);">📄</div>
+                <div>
+                    <div class="sec-title">Upload a Paper</div>
+                    <div class="sec-sub">PDF only · up to 10 MB</div>
+                </div>
             </div>
-            <div class="summary-stats">
-                <div class="stat"><strong>{{ summary|wordcount }}</strong> words</div>
-                <div class="stat" style="color:var(--text-4);">·</div>
-                <div class="stat">Research paper analysis</div>
+
+            <form method="POST" action="{% url 'dashboard' %}" enctype="multipart/form-data"
+                onsubmit="return validateUpload()" id="uploadForm">
+                {% csrf_token %}
+
+                <div class="drop-zone" id="dropZone">
+                    <input type="file" name="file" id="fileInput" accept=".pdf">
+                    <div id="dropDefault">
+                        <div class="drop-icon">📂</div>
+                        <p class="drop-primary">Drop your PDF here</p>
+                        <p class="drop-hint">or click to browse your files</p>
+                    </div>
+                    <div id="dropSelected" style="display:none;">
+                        <div class="drop-icon" style="background:var(--green-light); border-color:var(--green-mid);">✅
+                        </div>
+                        <p class="drop-primary" id="dropFileName" style="color:var(--green);"></p>
+                        <p class="drop-hint">Ready to summarize</p>
+                    </div>
+                </div>
+
+                <p id="errMsg" class="err-text">⚠ Please select a PDF file first.</p>
+
+                <button type="submit" class="btn btn-blue" id="submitBtn"
+                    style="width:100%; margin-top:14px; padding:13px; font-size:0.92rem;">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    Generate Summary
+                </button>
+
+                <div id="loading" style="display:none; margin-top:14px;">
+                    <div class="load-bar">
+                        <div class="load-bar-fill"></div>
+                    </div>
+                    <p style="color:var(--text-3); font-size:0.8rem; text-align:center; margin-top:9px;">
+                        ⏳ Analysing your document — this may take a moment…
+                    </p>
+                </div>
+            </form>
+        </div>
+
+        <!-- ══ SEARCH ══ -->
+        <div class="card card-pad anim d2">
+            <div class="sec-head">
+                <div class="sec-icon" style="background:var(--green-light); border:1.5px solid var(--green-mid);">🔍
+                </div>
+                <div>
+                    <div class="sec-title">Explore a Topic</div>
+                    <div class="sec-sub">Find and summarize articles from the web</div>
+                </div>
             </div>
-            <div class="summary-body">
-                {{ summary|linebreaks }}
+
+            <form method="POST" action="{% url 'dashboard' %}" style="display:flex; gap:10px;">
+                {% csrf_token %}
+                <input type="text" name="search_query" value="{{ search_query }}"
+                    placeholder="e.g. machine learning, quantum computing, climate change…" class="field"
+                    style="flex:1;">
+                <button type="submit" class="btn btn-green" style="flex-shrink:0;">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    Search
+                </button>
+            </form>
+        </div>
+
+        <!-- SEARCH ERROR -->
+        {% if search_error %}
+        <div class="toast toast-err anim d2">
+            <div class="toast-dot"></div>
+            <span>{{ search_error }}</span>
+        </div>
+        {% endif %}
+
+        <!-- NO RESULTS -->
+        {% if articles is not None and not articles and not search_error %}
+        <div class="toast toast-warn anim d3">
+            <div class="toast-dot"></div>
+            <span>No articles found for <strong>"{{ search_query }}"</strong>. Try a different topic.</span>
+        </div>
+        {% endif %}
+
+        <!-- ══ ARTICLE RESULTS ══ -->
+        {% if articles %}
+        <div class="card card-pad anim d3">
+            <div class="result-bar">
+                <div class="sec-head" style="margin-bottom:0;">
+                    <div class="sec-icon" style="background:var(--amber-light); border:1.5px solid #fde68a;">📰</div>
+                    <div>
+                        <div class="sec-title">Results for "{{ search_query }}"</div>
+                        <div class="sec-sub">Summaries from top sources</div>
+                    </div>
+                </div>
+                <span class="count-pill">{{ articles|length }} articles</span>
             </div>
-            <hr class="div" style="margin-top:24px;">
-            <div style="display:flex; justify-content:flex-end;">
-                <a href="{% url 'download_summary' %}" class="btn btn-outline">
+
+            {% for article in articles %}
+            {% if article.description and "Could not retrieve" not in article.description %}
+            <div class="article-row">
+                <div class="art-num">{{ forloop.counter }}</div>
+                <p class="art-text">{{ article.description }}</p>
+            </div>
+            {% endif %}
+            {% endfor %}
+
+            <div style="margin-top:20px; display:flex; justify-content:flex-end;">
+                <a href="{% url 'download_summary' %}" class="btn btn-blue">
                     <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
-                    Download PDF
+                    Download as PDF
                 </a>
             </div>
         </div>
-    </div>
-    {% endif %}
+        {% endif %}
 
-</main>
+        <!-- ══ AI SUMMARY ══ -->
+        {% if summary %}
+        <div class="summary-card anim d4">
+            <div class="summary-stripe"></div>
+            <div class="card-pad">
+                <div class="summary-head">
+                    <h2 class="summary-title">AI Summary</h2>
+                    <span class="badge-ai">✦ AI Generated</span>
+                </div>
+                <div class="summary-stats">
+                    <div class="stat"><strong>{{ summary|wordcount }}</strong> words</div>
+                    <div class="stat" style="color:var(--text-4);">·</div>
+                    <div class="stat">Research paper analysis</div>
+                </div>
+                <div class="summary-body">
+                    {{ summary|linebreaks }}
+                </div>
+                <hr class="div" style="margin-top:24px;">
+                <div style="display:flex; justify-content:flex-end;">
+                    <a href="{% url 'download_summary' %}" class="btn btn-outline">
+                        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download PDF
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
-<script>
-const fileInput    = document.getElementById('fileInput');
-const dropZone     = document.getElementById('dropZone');
-const dropDefault  = document.getElementById('dropDefault');
-const dropSelected = document.getElementById('dropSelected');
-const dropFileName = document.getElementById('dropFileName');
-const errMsg       = document.getElementById('errMsg');
-const loading      = document.getElementById('loading');
+    </main>
 
-fileInput.addEventListener('change', function () {
-    if (this.files && this.files[0]) {
-        dropDefault.style.display = 'none';
-        dropSelected.style.display = 'block';
-        dropFileName.textContent = this.files[0].name;
-        dropZone.classList.add('active');
-        errMsg.style.display = 'none';
-    }
-});
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const dropDefault = document.getElementById('dropDefault');
+        const dropSelected = document.getElementById('dropSelected');
+        const dropFileName = document.getElementById('dropFileName');
+        const errMsg = document.getElementById('errMsg');
+        const loading = document.getElementById('loading');
 
-function validateUpload() {
-    if (!fileInput.value) { errMsg.style.display = 'block'; return false; }
-    const ext = fileInput.value.split('.').pop().toLowerCase();
-    if (ext !== 'pdf') {
-        errMsg.textContent = '⚠ Only PDF files are accepted.';
-        errMsg.style.display = 'block';
-        return false;
-    }
-    errMsg.style.display = 'none';
-    loading.style.display = 'block';
-    return true;
-}
+        fileInput.addEventListener('change', function () {
+            if (this.files && this.files[0]) {
+                dropDefault.style.display = 'none';
+                dropSelected.style.display = 'block';
+                dropFileName.textContent = this.files[0].name;
+                dropZone.classList.add('active');
+                errMsg.style.display = 'none';
+            }
+        });
 
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('active'); });
-['dragleave', 'drop'].forEach(ev => dropZone.addEventListener(ev, () => {
-    if (!fileInput.value) dropZone.classList.remove('active');
-}));
+        function validateUpload() {
+            if (!fileInput.value) { errMsg.style.display = 'block'; return false; }
+            const ext = fileInput.value.split('.').pop().toLowerCase();
+            if (ext !== 'pdf') {
+                errMsg.textContent = '⚠ Only PDF files are accepted.';
+                errMsg.style.display = 'block';
+                return false;
+            }
+            errMsg.style.display = 'none';
+            loading.style.display = 'block';
+            return true;
+        }
 
-setTimeout(() => {
-    document.querySelectorAll('.toast').forEach(el => {
-        el.style.transition = 'opacity 0.5s';
-        el.style.opacity = '0';
-        setTimeout(() => el.style.display = 'none', 500);
-    });
-}, 5500);
-</script>
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('active'); });
+        ['dragleave', 'drop'].forEach(ev => dropZone.addEventListener(ev, () => {
+            if (!fileInput.value) dropZone.classList.remove('active');
+        }));
+
+        setTimeout(() => {
+            document.querySelectorAll('.toast').forEach(el => {
+                el.style.transition = 'opacity 0.5s';
+                el.style.opacity = '0';
+                setTimeout(() => el.style.display = 'none', 500);
+            });
+        }, 5500);
+    </script>
 </body>
+
 </html>
